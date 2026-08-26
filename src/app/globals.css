@@ -1,0 +1,62 @@
+@import "tailwindcss" source(none);
+@config "../../tailwind.config.ts";
+@source "../";
+@source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: light;
+  --canvas: 210 24% 97%;
+  --panel: 0 0% 100%;
+  --ink: 220 28% 14%;
+  --muted: 218 9% 43%;
+  --line: 216 17% 88%;
+  --shadow: 218 30% 28%;
+}
+
+.dark {
+  color-scheme: dark;
+  --canvas: 220 20% 8%;
+  --panel: 220 18% 11%;
+  --ink: 210 20% 96%;
+  --muted: 216 10% 65%;
+  --line: 218 15% 21%;
+  --shadow: 220 40% 2%;
+}
+
+* {
+  border-color: hsl(var(--line));
+  letter-spacing: 0;
+}
+
+html {
+  background: hsl(var(--canvas));
+}
+
+body {
+  min-height: 100dvh;
+  background: hsl(var(--canvas));
+  color: hsl(var(--ink));
+  font-family: Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgb(8 127 91 / 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

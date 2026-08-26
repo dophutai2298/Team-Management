@@ -9,9 +9,13 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+/.npm-cache
 
 # testing
 /coverage
+/.playwright/
+/playwright-report/
+/test-results/
 /.scratch/performance/*.json
 
 # next.js
