@@ -36,5 +36,5 @@ test("keeps the mobile shell within the viewport and opens navigation", async ({
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport);
 
   await page.getByRole("button", { name: "Mở điều hướng" }).click();
-  await expect(page.getByRole("navigation", { name: "Primary" })).toBeInViewport();
+  await expect(page.getByRole("navigation", { name: "Điều hướng chính" })).toBeInViewport();
 });

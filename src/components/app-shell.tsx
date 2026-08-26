@@ -3,15 +3,16 @@
 import { Avatar, Button, Chip, Tooltip } from "@heroui/react";
 import {
   Bell,
+  Building2,
   CalendarDays,
-  ChartNoAxesCombined,
   CheckSquare2,
   LayoutDashboard,
+  ListTodo,
   Menu,
   Search,
-  Settings,
+  ShieldCheck,
+  Timer,
   Users,
-  UsersRound,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,11 +27,14 @@ import { ThemeToggle } from "./theme-toggle";
 
 const navigation = [
   { key: "nav.overview", href: "/dashboard", icon: LayoutDashboard, available: true },
-  { key: "nav.people", href: "/people", icon: Users, available: false },
-  { key: "nav.teams", href: "/teams", icon: UsersRound, available: false },
+  { key: "nav.organization", href: "/organization", icon: Building2, available: false },
+  { key: "nav.employees", href: "/employees", icon: Users, available: false },
   { key: "nav.tasks", href: "/tasks", icon: CheckSquare2, available: false },
   { key: "nav.calendar", href: "/calendar", icon: CalendarDays, available: false },
-  { key: "nav.reports", href: "/reports", icon: ChartNoAxesCombined, available: false },
+  { key: "nav.notifications", href: "/notifications", icon: Bell, available: false },
+  { key: "nav.todo", href: "/todo", icon: ListTodo, available: false },
+  { key: "nav.focus", href: "/focus", icon: Timer, available: false },
+  { key: "nav.admin", href: "/admin", icon: ShieldCheck, available: false, pinToBottom: true },
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -81,9 +85,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
 
-          <nav aria-label="Primary" className="mt-8 flex flex-1 flex-col gap-1">
-            {navigation.map(({ key, href, icon: Icon, available }) => {
+          <nav aria-label={t("nav.primary")} className="mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+            {navigation.map(({ key, href, icon: Icon, available, ...item }) => {
               const active = available && pathname === href;
+              const pinToBottom = "pinToBottom" in item && item.pinToBottom;
               const content = (
                 <>
                   <Icon aria-hidden size={18} strokeWidth={1.8} />
@@ -101,7 +106,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <div
                     key={href}
                     aria-disabled="true"
-                    className="flex h-10 cursor-not-allowed items-center gap-3 rounded-md px-3 text-sm text-muted opacity-70"
+                    className={`flex h-10 shrink-0 cursor-not-allowed items-center gap-3 rounded-md px-3 text-sm text-muted opacity-70 ${
+                      pinToBottom ? "mt-auto border-t border-line" : ""
+                    }`}
                   >
                     {content}
                   </div>
@@ -126,15 +133,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="border-t border-line pt-3">
-            <div className="flex h-10 items-center gap-3 rounded-md px-3 text-sm text-muted opacity-70">
-              <Settings aria-hidden size={18} strokeWidth={1.8} />
-              <span className="flex-1">{t("nav.settings")}</span>
-              <Chip className="h-5 bg-default-100 px-1 text-[10px] text-muted" radius="sm" size="sm">
-                {t("nav.soon")}
-              </Chip>
-            </div>
-          </div>
         </aside>
 
         <div className="min-w-0 overflow-x-hidden">

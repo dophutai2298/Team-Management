@@ -2,9 +2,13 @@
 
 import { Card, CardBody, Skeleton } from "@heroui/react";
 
+import { useLocale } from "@/lib/i18n/locale-provider";
+
 export function WorkspaceLoading() {
+  const { t } = useLocale();
+
   return (
-    <div className="mx-auto w-full max-w-[1280px]" aria-busy="true" aria-label="Loading workspace">
+    <div className="mx-auto w-full max-w-[1280px]" aria-busy="true" aria-label={t("loading.label")}>
       <div className="flex items-end justify-between gap-5">
         <div className="w-full max-w-lg space-y-3">
           <Skeleton className="h-3 w-32 rounded-sm" />

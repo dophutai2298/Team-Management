@@ -162,7 +162,7 @@ export function DashboardOverview() {
           <div className="grid min-h-44 place-items-center border-b border-line pb-5 text-center">
             <div className="max-w-xs">
               <span className="mx-auto grid h-11 w-11 place-items-center rounded-lg bg-primary/10 text-primary">
-                <LayoutReadyIcon />
+                <ClipboardCheck aria-hidden size={21} />
               </span>
               <h2 className="mt-4 text-sm font-semibold text-ink">{t("dashboard.emptyTitle")}</h2>
               <p className="mt-2 text-sm leading-6 text-muted">{t("dashboard.emptyDescription")}</p>
@@ -173,8 +173,4 @@ export function DashboardOverview() {
       </div>
     </div>
   );
-}
-
-function LayoutReadyIcon() {
-  return <ClipboardCheck aria-hidden size={21} />;
 }

@@ -8,13 +8,16 @@ export const FALLBACK_LOCALE: Locale = "en";
 const englishMessages = {
   "app.name": "Team Management",
   "app.workspace": "Operations workspace",
+  "nav.primary": "Primary navigation",
   "nav.overview": "Overview",
-  "nav.people": "People",
-  "nav.teams": "Teams",
+  "nav.organization": "Organization",
+  "nav.employees": "Employees",
   "nav.tasks": "Tasks",
   "nav.calendar": "Calendar",
-  "nav.reports": "Reports",
-  "nav.settings": "Settings",
+  "nav.notifications": "Notifications",
+  "nav.todo": "Todo",
+  "nav.focus": "Focus",
+  "nav.admin": "Admin",
   "nav.soon": "Soon",
   "header.search": "Search workspace",
   "header.notifications": "Notifications",
@@ -57,13 +60,16 @@ export type MessageKey = keyof typeof englishMessages;
 const vietnameseMessages: Partial<Record<MessageKey, string>> = {
   "app.name": "Quản lý đội ngũ",
   "app.workspace": "Không gian vận hành",
+  "nav.primary": "Điều hướng chính",
   "nav.overview": "Tổng quan",
-  "nav.people": "Nhân sự",
-  "nav.teams": "Đội nhóm",
+  "nav.organization": "Tổ chức",
+  "nav.employees": "Nhân sự",
   "nav.tasks": "Công việc",
   "nav.calendar": "Lịch",
-  "nav.reports": "Báo cáo",
-  "nav.settings": "Cài đặt",
+  "nav.notifications": "Thông báo",
+  "nav.todo": "Việc cần làm",
+  "nav.focus": "Tập trung",
+  "nav.admin": "Quản trị",
   "nav.soon": "Sắp có",
   "header.search": "Tìm trong workspace",
   "header.notifications": "Thông báo",
@@ -110,5 +116,5 @@ export function isLocale(value: string): value is Locale {
 }
 
 export function resolveMessage(locale: Locale, key: MessageKey): string {
-  return messages[locale][key] ?? englishMessages[key];
+  return messages[locale][key] ?? messages[FALLBACK_LOCALE][key] ?? key;
 }
