@@ -63,6 +63,18 @@ const errorMessageKeys: Partial<Record<string, MessageKey>> = {
   UNAUTHENTICATED: "admin.errorUnauthenticated",
 };
 
+const adminModalClassNames = {
+  backdrop: "z-[80] bg-black/45",
+  base: "border border-line bg-panel text-ink shadow-2xl",
+  closeButton: "z-10 text-muted hover:bg-canvas hover:text-ink",
+  wrapper: "z-[90]",
+};
+
+const adminSelectClassNames = {
+  popoverContent: "z-[100] border border-line bg-panel text-ink shadow-lg",
+  trigger: "border-line bg-canvas data-[hover=true]:bg-panel data-[open=true]:bg-panel",
+};
+
 function getErrorMessage(error: unknown, t: (key: MessageKey) => string): string {
   return error instanceof ApiClientError ? t(errorMessageKeys[error.code] ?? "admin.errorGeneric") : t("admin.errorGeneric");
 }
@@ -316,6 +328,7 @@ export function AdminApprovalWorkspace() {
 
       <Modal
         backdrop="opaque"
+        classNames={adminModalClassNames}
         isOpen={approvalTarget !== null}
         radius="sm"
         scrollBehavior="inside"
@@ -358,6 +371,7 @@ export function AdminApprovalWorkspace() {
                       <Select
                         isRequired
                         aria-label={t("admin.team")}
+                        classNames={adminSelectClassNames}
                         label={t("admin.team")}
                         labelPlacement="outside"
                         placeholder={t("admin.selectTeam")}
@@ -374,6 +388,7 @@ export function AdminApprovalWorkspace() {
                       <Select
                         isRequired
                         aria-label={t("admin.role")}
+                        classNames={adminSelectClassNames}
                         label={t("admin.role")}
                         labelPlacement="outside"
                         placeholder={t("admin.selectRole")}
@@ -387,6 +402,7 @@ export function AdminApprovalWorkspace() {
                       </Select>
                       <Select
                         aria-label={t("admin.manager")}
+                        classNames={adminSelectClassNames}
                         label={t("admin.manager")}
                         labelPlacement="outside"
                         placeholder={t("admin.noManager")}
@@ -444,6 +460,7 @@ export function AdminApprovalWorkspace() {
 
       <Modal
         backdrop="opaque"
+        classNames={adminModalClassNames}
         isOpen={rejectionTarget !== null}
         radius="sm"
         onOpenChange={(isOpen) => !isOpen && !rejectMutation.isPending && setRejectionTarget(null)}

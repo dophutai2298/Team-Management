@@ -23,11 +23,17 @@ export function UserMenu() {
   }
 
   return (
-    <Dropdown placement="bottom-end">
+    <Dropdown
+      classNames={{
+        base: "z-[70]",
+        content: "border border-line bg-panel text-ink shadow-lg",
+      }}
+      placement="bottom-end"
+    >
       <DropdownTrigger>
         <button
           aria-label={t("header.profile")}
-          className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="relative z-20 rounded-full border border-line bg-panel p-0.5 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           type="button"
         >
           <Avatar className="h-9 w-9 bg-primary text-xs text-primary-foreground" name="TA" />
