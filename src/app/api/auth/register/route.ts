@@ -29,6 +29,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  try {
+    await createRegistrationClaim(validation.value);
+  } catch {
+    return createAuthFailure(
+      "REGISTRATION_SETUP_FAILED",
+      "Your registration could not be prepared. Please try again.",
+      503,
+    );
+  }
+
   const response = createAuthResponse({
     email: validation.value.email,
     next: "/verify-email",
@@ -47,16 +57,6 @@ export async function POST(request: NextRequest) {
         ? "This work email is already registered. Sign in instead."
         : "We could not create your account. Please try again.",
       error?.statusCode ?? 400,
-    );
-  }
-
-  try {
-    await createRegistrationClaim(data.user.id, validation.value);
-  } catch {
-    return createAuthFailure(
-      "REGISTRATION_SETUP_FAILED",
-      "Your account could not be prepared for approval. Contact an administrator before trying again.",
-      503,
     );
   }
 

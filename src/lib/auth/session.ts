@@ -2,7 +2,7 @@ import "server-only";
 
 import { createInsForgeServerClient } from "@/lib/insforge/server";
 
-import { getAccountAccess, type AccountAccess } from "./access";
+import { getAuthenticatedAccountAccess, type AccountAccess } from "./access";
 import { getEmployeeAccount, type EmployeeAccount } from "./repository";
 
 export type CurrentActor = {
@@ -30,6 +30,6 @@ export async function getCurrentActor(): Promise<CurrentActor | null> {
     authUserId: data.user.id,
     email: data.user.email.toLowerCase(),
     employee,
-    access: getAccountAccess(employee ?? { accountStatus: "pending_approval" }),
+    access: getAuthenticatedAccountAccess(employee),
   };
 }

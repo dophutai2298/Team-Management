@@ -42,9 +42,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const claim = await getRegistrationClaim(data.user.id);
+  const claim = await getRegistrationClaim(input.email);
 
-  if (!claim || claim.email !== input.email) {
+  if (!claim) {
     return createAuthFailure(
       "REGISTRATION_CLAIM_NOT_FOUND",
       "Your registration details could not be found. Contact an administrator for help.",
@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await createPendingEmployee(claim);
-    await deleteRegistrationClaim(data.user.id);
+    await createPendingEmployee(data.user.id, claim);
+    await deleteRegistrationClaim(input.email);
   } catch {
     return createAuthFailure(
       "PENDING_ACCOUNT_SETUP_FAILED",

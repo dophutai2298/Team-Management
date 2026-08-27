@@ -27,7 +27,6 @@ type EmployeeRow = {
 };
 
 type RegistrationClaimRow = {
-  auth_user_id: string;
   email: string;
   full_name: string;
   employee_code_claim: string;
@@ -61,29 +60,28 @@ export async function isAllowedEmailDomain(domain: string): Promise<boolean> {
   return data !== null;
 }
 
-export async function createRegistrationClaim(
-  authUserId: string,
-  registration: RegistrationClaim,
-): Promise<void> {
-  const { error } = await getInsForgeAdminClient().database.from("registration_claims").insert([
-    {
-      auth_user_id: authUserId,
-      email: registration.email,
-      full_name: registration.fullName,
-      employee_code_claim: registration.employeeCodeClaim,
-    },
-  ]);
+export async function createRegistrationClaim(registration: RegistrationClaim): Promise<void> {
+  const { error } = await getInsForgeAdminClient().database.from("registration_claims").upsert(
+    [
+      {
+        email: registration.email,
+        full_name: registration.fullName,
+        employee_code_claim: registration.employeeCodeClaim,
+      },
+    ],
+    { onConflict: "email" },
+  );
 
   if (error) {
     throw error;
   }
 }
 
-export async function getRegistrationClaim(authUserId: string): Promise<RegistrationClaimRow | null> {
+export async function getRegistrationClaim(email: string): Promise<RegistrationClaimRow | null> {
   const { data, error } = await getInsForgeAdminClient().database
     .from("registration_claims")
-    .select("auth_user_id, email, full_name, employee_code_claim")
-    .eq("auth_user_id", authUserId)
+    .select("email, full_name, employee_code_claim")
+    .eq("email", email)
     .maybeSingle();
 
   if (error) {
@@ -94,6 +92,7 @@ export async function getRegistrationClaim(authUserId: string): Promise<Registra
 }
 
 export async function createPendingEmployee(
+  authUserId: string,
   claim: RegistrationClaimRow,
 ): Promise<EmployeeAccount> {
   const { data, error } = await getInsForgeAdminClient().database
@@ -101,7 +100,7 @@ export async function createPendingEmployee(
     .upsert(
       [
         {
-          auth_user_id: claim.auth_user_id,
+          auth_user_id: authUserId,
           email: claim.email,
           full_name: claim.full_name,
           employee_code_claim: claim.employee_code_claim,
@@ -122,11 +121,11 @@ export async function createPendingEmployee(
   return toEmployeeAccount(data as EmployeeRow);
 }
 
-export async function deleteRegistrationClaim(authUserId: string): Promise<void> {
+export async function deleteRegistrationClaim(email: string): Promise<void> {
   const { error } = await getInsForgeAdminClient().database
     .from("registration_claims")
     .delete()
-    .eq("auth_user_id", authUserId);
+    .eq("email", email);
 
   if (error) {
     throw error;

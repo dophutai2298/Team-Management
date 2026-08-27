@@ -9,6 +9,7 @@ export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 
 export type AccountAccess =
   | { kind: "unauthenticated"; canAccessWorkspace: false }
+  | { kind: "registration_incomplete"; canAccessWorkspace: false }
   | { kind: "pending_approval"; canAccessWorkspace: false }
   | { kind: "active"; canAccessWorkspace: true }
   | { kind: "disabled"; canAccessWorkspace: false }
@@ -91,4 +92,32 @@ export function getAccountAccess(
     kind: employee.accountStatus,
     canAccessWorkspace: employee.accountStatus === "active",
   } as AccountAccess;
+}
+
+export function getAuthenticatedAccountAccess(
+  employee: { accountStatus: AccountStatus } | null,
+): AccountAccess {
+  return employee
+    ? getAccountAccess(employee)
+    : { kind: "registration_incomplete", canAccessWorkspace: false };
+}
+
+export function getSafeInternalPath(value: unknown, fallback = "/dashboard"): string {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
+    return fallback;
+  }
+
+  return value;
+}
+
+export function getAccountDestination(access: AccountAccess, activeDestination = "/dashboard"): string {
+  if (access.canAccessWorkspace) {
+    return activeDestination;
+  }
+
+  if (access.kind === "pending_approval") {
+    return "/pending";
+  }
+
+  return access.kind === "unauthenticated" ? "/login" : "/account-status";
 }

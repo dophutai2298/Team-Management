@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getAccountDestination,
   getAccountAccess,
+  getAuthenticatedAccountAccess,
   getEmailDomain,
   validateRegistration,
 } from "./access";
@@ -70,5 +72,18 @@ describe("account access gate", () => {
       kind: "unauthenticated",
       canAccessWorkspace: false,
     });
+  });
+
+  it("does not treat a signed-in account without an employee draft as pending approval", () => {
+    expect(getAuthenticatedAccountAccess(null)).toEqual({
+      kind: "registration_incomplete",
+      canAccessWorkspace: false,
+    });
+  });
+
+  it("uses one destination map for every account state", () => {
+    expect(getAccountDestination({ kind: "active", canAccessWorkspace: true }, "/tasks")).toBe("/tasks");
+    expect(getAccountDestination({ kind: "pending_approval", canAccessWorkspace: false })).toBe("/pending");
+    expect(getAccountDestination({ kind: "disabled", canAccessWorkspace: false })).toBe("/account-status");
   });
 });

@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 
-import { getAccountAccess } from "@/lib/auth/access";
+import { getAccountDestination, getAuthenticatedAccountAccess } from "@/lib/auth/access";
 import { getEmployeeAccount } from "@/lib/auth/repository";
 import {
   createAuthFailure,
@@ -48,12 +48,8 @@ export async function POST(request: NextRequest) {
   }
 
   const employee = await getEmployeeAccount(data.user.id);
-  const access = getAccountAccess(employee ?? { accountStatus: "pending_approval" });
-  const next = access.canAccessWorkspace
-    ? input.returnTo
-    : access.kind === "pending_approval"
-      ? "/pending"
-      : "/account-status";
+  const access = getAuthenticatedAccountAccess(employee);
+  const next = getAccountDestination(access, input.returnTo);
 
   return withAuthCookies(response, { next, access: access.kind });
 }

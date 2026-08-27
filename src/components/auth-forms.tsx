@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { ApiClientError, fetchApi } from "@/lib/api/client";
+import { getSafeInternalPath } from "@/lib/auth/access";
 import { useLocale } from "@/lib/i18n/locale-provider";
 
 import { AuthBackLink, AuthShell } from "./auth-shell";
@@ -15,10 +16,6 @@ type AuthResult = { next: string; access?: string; email?: string };
 
 function getErrorMessage(error: unknown): string {
   return error instanceof ApiClientError ? error.message : "Something went wrong. Please try again.";
-}
-
-function getSafeReturnTo(value: string | null): string {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
 }
 
 export function SignInForm() {
@@ -32,7 +29,11 @@ export function SignInForm() {
       fetchApi<AuthResult>("/api/auth/sign-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, returnTo: getSafeReturnTo(searchParams.get("returnTo")) }),
+        body: JSON.stringify({
+          email,
+          password,
+          returnTo: getSafeInternalPath(searchParams.get("returnTo")),
+        }),
       }),
     onSuccess: (result) => router.replace(result.next),
   });

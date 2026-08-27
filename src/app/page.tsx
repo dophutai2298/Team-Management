@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { getAccountDestination } from "@/lib/auth/access";
 import { getCurrentActor } from "@/lib/auth/session";
 
 export default async function HomePage() {
@@ -9,9 +10,5 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  if (actor.access.canAccessWorkspace) {
-    redirect("/dashboard");
-  }
-
-  redirect(actor.access.kind === "pending_approval" ? "/pending" : "/account-status");
+  redirect(getAccountDestination(actor.access));
 }

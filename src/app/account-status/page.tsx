@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AccessStatus } from "@/components/auth-shell";
+import { getAccountDestination } from "@/lib/auth/access";
 import { getCurrentActor } from "@/lib/auth/session";
 
 export default async function AccountStatusPage() {
@@ -10,12 +11,10 @@ export default async function AccountStatusPage() {
     redirect("/login");
   }
 
-  if (actor.access.canAccessWorkspace) {
-    redirect("/dashboard");
-  }
+  const destination = getAccountDestination(actor.access);
 
-  if (actor.access.kind === "pending_approval") {
-    redirect("/pending");
+  if (destination !== "/account-status") {
+    redirect(destination);
   }
 
   return <AccessStatus kind="blocked" />;

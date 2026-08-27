@@ -5,6 +5,8 @@ import { createAuthActions } from "@insforge/sdk/ssr";
 import { apiFailure, apiSuccess, type ApiResponse } from "@/lib/api/response";
 import { readInsForgePublicEnv } from "@/lib/insforge/public-env";
 
+import { getSafeInternalPath } from "./access";
+
 export function createAuthResponse<T>(data: T): NextResponse<ApiResponse<T>> {
   return NextResponse.json(apiSuccess(data));
 }
@@ -47,10 +49,4 @@ export async function readJsonBody(request: Request): Promise<Record<string, unk
   }
 }
 
-export function getSafeInternalPath(value: unknown, fallback = "/dashboard"): string {
-  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
-    return fallback;
-  }
-
-  return value;
-}
+export { getSafeInternalPath };

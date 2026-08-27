@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { getAccountDestination } from "@/lib/auth/access";
 import { getCurrentActor } from "@/lib/auth/session";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -11,7 +12,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   }
 
   if (!actor.access.canAccessWorkspace) {
-    redirect(actor.access.kind === "pending_approval" ? "/pending" : "/account-status");
+    redirect(getAccountDestination(actor.access));
   }
 
   return <AppShell>{children}</AppShell>;

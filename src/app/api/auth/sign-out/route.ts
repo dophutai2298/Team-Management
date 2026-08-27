@@ -7,11 +7,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   const response = createAuthResponse({ next: "/login" });
   const auth = createRequestAuthActions(request, response);
-  const { error } = await auth.signOut();
-
-  if (error) {
-    return response;
-  }
+  await auth.signOut();
 
   return response;
 }
