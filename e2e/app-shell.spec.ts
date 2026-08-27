@@ -1,32 +1,31 @@
 import { expect, test } from "@playwright/test";
 
-test("loads the dashboard through the shared query provider", async ({ page }) => {
+test("redirects anonymous visitors from the dashboard to sign in", async ({ page }) => {
   await page.goto("/dashboard");
 
-  await expect(page.getByRole("heading", { name: "Chào buổi tối, Tai" })).toBeVisible();
-  await expect(page.getByText("Tất cả hệ thống đã sẵn sàng")).toBeVisible();
-  await expect(page.getByText("team-management-bff")).toBeVisible();
+  await expect(page).toHaveURL(/\/login\?returnTo=\/dashboard/);
+  await expect(page.getByRole("heading", { name: "Chao mung ban quay lai" })).toBeVisible();
 });
 
 test("persists theme and locale choices across reloads", async ({ page }) => {
-  await page.goto("/dashboard");
+  await page.goto("/login");
 
-  await page.getByRole("button", { name: "Dùng giao diện tối" }).click();
+  await page.getByRole("button", { name: /giao/i }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
 
-  await page.getByRole("button", { name: "Ngôn ngữ" }).click();
+  await page.getByRole("button", { name: /Ng/ }).click();
   await page.getByRole("menuitemradio", { name: "English" }).click();
-  await expect(page.getByRole("heading", { name: "Good evening, Tai" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 
   await page.reload();
 
   await expect(page.locator("html")).toHaveClass(/dark/);
-  await expect(page.getByRole("heading", { name: "Good evening, Tai" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
-test("keeps the mobile shell within the viewport and opens navigation", async ({ page }) => {
+test("keeps the registration screen within the mobile viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/dashboard");
+  await page.goto("/register");
 
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
@@ -34,7 +33,5 @@ test("keeps the mobile shell within the viewport and opens navigation", async ({
   }));
 
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport);
-
-  await page.getByRole("button", { name: "Mở điều hướng" }).click();
-  await expect(page.getByRole("navigation", { name: "Điều hướng chính" })).toBeInViewport();
+  await expect(page.getByRole("heading", { name: "Tao tai khoan cong ty" })).toBeInViewport();
 });
