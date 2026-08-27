@@ -6,22 +6,22 @@
 
 :root {
   color-scheme: light;
-  --canvas: 210 24% 97%;
+  --canvas: 120 5% 97%;
   --panel: 0 0% 100%;
-  --ink: 220 28% 14%;
-  --muted: 218 9% 43%;
-  --line: 216 17% 88%;
-  --shadow: 218 30% 28%;
+  --ink: 142 14% 11%;
+  --muted: 145 6% 43%;
+  --line: 140 7% 90%;
+  --shadow: 145 18% 14%;
 }
 
 .dark {
   color-scheme: dark;
-  --canvas: 220 20% 8%;
-  --panel: 220 18% 11%;
-  --ink: 210 20% 96%;
-  --muted: 216 10% 65%;
-  --line: 218 15% 21%;
-  --shadow: 220 40% 2%;
+  --canvas: 142 14% 7%;
+  --panel: 145 14% 10%;
+  --ink: 140 14% 93%;
+  --muted: 142 8% 63%;
+  --line: 143 13% 17%;
+  --shadow: 140 20% 2%;
 }
 
 * {
@@ -37,7 +37,7 @@ body {
   min-height: 100dvh;
   background: hsl(var(--canvas));
   color: hsl(var(--ink));
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   text-rendering: optimizeLegibility;
 }
 

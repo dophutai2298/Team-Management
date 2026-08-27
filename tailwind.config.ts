@@ -27,19 +27,19 @@ const config: Config = {
         light: {
           colors: {
             primary: {
-              DEFAULT: "#087f5b",
+              DEFAULT: "#0F5C45",
               foreground: "#ffffff",
             },
-            focus: "#087f5b",
+            focus: "#0F5C45",
           },
         },
         dark: {
           colors: {
             primary: {
-              DEFAULT: "#45c99a",
-              foreground: "#071b15",
+              DEFAULT: "#77D6AD",
+              foreground: "#101513",
             },
-            focus: "#45c99a",
+            focus: "#77D6AD",
           },
         },
       },

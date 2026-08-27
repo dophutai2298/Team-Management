@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,6 +11,7 @@ import { getSafeInternalPath } from "@/lib/auth/access";
 import { useLocale } from "@/lib/i18n/locale-provider";
 
 import { AuthBackLink, AuthShell } from "./auth-shell";
+import { TextField } from "./ui/text-field";
 
 type AuthResult = { next: string; access?: string; email?: string };
 
@@ -47,20 +48,18 @@ export function SignInForm() {
           signIn.mutate();
         }}
       >
-        <Input
+        <TextField
           isRequired
           autoComplete="email"
           label={t("auth.email")}
-          radius="sm"
           type="email"
           value={email}
           onValueChange={setEmail}
         />
-        <Input
+        <TextField
           isRequired
           autoComplete="current-password"
           label={t("auth.password")}
-          radius="sm"
           type="password"
           value={password}
           onValueChange={setPassword}
@@ -106,29 +105,26 @@ export function RegistrationForm() {
           register.mutate();
         }}
       >
-        <Input isRequired label={t("auth.fullName")} radius="sm" value={fullName} onValueChange={setFullName} />
-        <Input
+        <TextField isRequired label={t("auth.fullName")} value={fullName} onValueChange={setFullName} />
+        <TextField
           isRequired
           autoComplete="email"
           label={t("auth.email")}
-          radius="sm"
           type="email"
           value={email}
           onValueChange={setEmail}
         />
-        <Input
+        <TextField
           isRequired
           label={t("auth.employeeCode")}
-          radius="sm"
           value={employeeCodeClaim}
           onValueChange={setEmployeeCodeClaim}
         />
-        <Input
+        <TextField
           isRequired
           autoComplete="new-password"
           label={t("auth.password")}
           minLength={6}
-          radius="sm"
           type="password"
           value={password}
           onValueChange={setPassword}
@@ -174,22 +170,20 @@ export function VerifyEmailForm() {
           verify.mutate();
         }}
       >
-        <Input
+        <TextField
           isRequired
           autoComplete="email"
           label={t("auth.email")}
-          radius="sm"
           type="email"
           value={email}
           onValueChange={setEmail}
         />
-        <Input
+        <TextField
           isRequired
           autoComplete="one-time-code"
           inputMode="numeric"
           label={t("auth.otp")}
           maxLength={6}
-          radius="sm"
           value={otp}
           onValueChange={(value) => setOtp(value.replace(/\D/g, "").slice(0, 6))}
         />

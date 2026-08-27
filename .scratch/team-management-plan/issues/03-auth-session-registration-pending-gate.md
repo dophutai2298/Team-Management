@@ -6,12 +6,12 @@
 
 **Status:** resolved
 
-- [ ] Users can register with an allowed company email domain and submit an employee code claim.
-- [ ] Email OTP verification moves the account into pending approval.
-- [ ] Verified-but-unapproved users can log in but cannot access protected app features.
-- [ ] Active users can access the app shell after authentication.
-- [ ] Invalid domains, invalid OTPs, and blocked account states show friendly errors.
-- [ ] Auth/session state flows through the shared actor/session access pattern.
+- [x] Users can register with an allowed company email domain and submit an employee code claim.
+- [x] Email OTP verification moves the account into pending approval.
+- [x] Verified-but-unapproved users can log in but cannot access protected app features.
+- [x] Active users can access the app shell after authentication.
+- [x] Invalid domains, invalid OTPs, and blocked account states show friendly errors.
+- [x] Auth/session state flows through the shared actor/session access pattern.
 
 ## Answer
 
@@ -22,3 +22,10 @@ Implemented the InsForge-backed registration, OTP verification, and account acce
 - Added active, pending, blocked, and incomplete-registration gates using the shared `getCurrentActor()` access pattern.
 - Added client registration, verification, login, pending, and account-status screens using TanStack Query mutations.
 - Verified with typecheck, lint, Vitest, Playwright, production build, InsForge migration history, and API checks.
+
+## Verification
+
+- Confirmed `registration_claims`, `allowed_email_domains`, and `employees.account_status` migrations support the required lifecycle.
+- `src/lib/auth/access.test.ts`: 8/8 tests pass for registration validation and every account access destination.
+- Browser check confirms anonymous `/dashboard` requests redirect to `/login?returnTo=/dashboard`.
+- Remaining test gap: the repo does not yet have a controlled end-to-end fixture for InsForge email OTP delivery or an Admin promotion from `pending_approval` to `active`.

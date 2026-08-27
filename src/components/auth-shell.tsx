@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, CardBody } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Chip, Divider } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, BadgeCheck, Building2, LogOut, ShieldAlert } from "lucide-react";
 import Link from "next/link";
@@ -47,10 +47,16 @@ export function AuthShell({
 
       <div className="mx-auto grid min-h-[calc(100dvh-7rem)] w-full max-w-5xl place-items-center py-10">
         <Card className="w-full max-w-md border border-line bg-panel shadow-none" radius="sm">
-          <CardBody className="gap-0 p-5 sm:p-7">
-            <span className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-primary/10 text-primary">
+          <CardHeader className="flex items-center justify-between bg-primary/5 px-5 py-5 sm:px-7">
+            <span className="grid h-10 w-10 place-items-center rounded-md bg-primary/10 text-primary">
               <Building2 aria-hidden size={21} />
             </span>
+            <Chip className="h-6 border-0 px-2 text-[11px] font-medium" color="primary" radius="sm" size="sm" variant="flat">
+              {t("auth.brandNote")}
+            </Chip>
+          </CardHeader>
+          <Divider className="bg-line" />
+          <CardBody className="gap-0 p-5 pt-6 sm:p-7 sm:pt-7">
             <h1 className="text-xl font-semibold text-ink">{title}</h1>
             <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
             <div className="mt-7">{children}</div>
