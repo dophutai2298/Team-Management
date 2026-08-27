@@ -35,6 +35,8 @@ import type { ApprovalInput, ApprovalOptions, PendingAccount } from "@/lib/admin
 import { useLocale } from "@/lib/i18n/locale-provider";
 import type { MessageKey } from "@/lib/i18n/messages";
 
+import { selectFieldClassNames, textareaFieldClassNames } from "./ui/form-field-styles";
+import { FormError } from "./ui/form-error";
 import { TextField } from "./ui/text-field";
 import { EmptyPanel } from "./workspace/empty-panel";
 import { PageHeader } from "./workspace/page-header";
@@ -65,14 +67,9 @@ const errorMessageKeys: Partial<Record<string, MessageKey>> = {
 
 const adminModalClassNames = {
   backdrop: "z-[80] bg-black/45",
-  base: "border border-line bg-panel text-ink shadow-2xl",
+  base: "overflow-hidden rounded-lg border border-line bg-panel text-ink shadow-2xl",
   closeButton: "z-10 text-muted hover:bg-canvas hover:text-ink",
   wrapper: "z-[90]",
-};
-
-const adminSelectClassNames = {
-  popoverContent: "z-[100] border border-line bg-panel text-ink shadow-lg",
-  trigger: "border-line bg-canvas data-[hover=true]:bg-panel data-[open=true]:bg-panel",
 };
 
 function getErrorMessage(error: unknown, t: (key: MessageKey) => string): string {
@@ -82,9 +79,9 @@ function getErrorMessage(error: unknown, t: (key: MessageKey) => string): string
 function QueueSkeleton() {
   return (
     <div className="space-y-3" aria-busy="true">
-      <Skeleton className="h-10 w-full rounded-sm" />
-      <Skeleton className="h-10 w-full rounded-sm" />
-      <Skeleton className="h-10 w-full rounded-sm" />
+      <Skeleton className="h-10 w-full rounded-lg" />
+      <Skeleton className="h-10 w-full rounded-lg" />
+      <Skeleton className="h-10 w-full rounded-lg" />
     </div>
   );
 }
@@ -92,9 +89,9 @@ function QueueSkeleton() {
 function SortButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Button
-      className="h-7 min-w-0 justify-start gap-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted"
+      className="h-7 min-w-0 justify-start gap-1 px-1 text-xs font-semibold text-muted"
       endContent={<ArrowDownUp aria-hidden size={12} />}
-      radius="sm"
+      radius="lg"
       size="sm"
       variant="light"
       onPress={onPress}
@@ -205,7 +202,7 @@ export function AdminApprovalWorkspace() {
         title={t("admin.title")}
         description={t("admin.description")}
         actions={
-          <Chip className="h-8 px-2.5 text-xs font-medium" color="warning" radius="sm" variant="flat">
+          <Chip className="h-8 px-2.5 text-xs font-medium" color="warning" radius="full" variant="flat">
             {accountsQuery.data?.accounts.length ?? 0} {t("admin.pendingCount")}
           </Chip>
         }
@@ -218,7 +215,7 @@ export function AdminApprovalWorkspace() {
               <Button
                 color="danger"
                 isLoading={accountsQuery.isFetching}
-                radius="sm"
+                radius="lg"
                 size="sm"
                 startContent={<RefreshCw aria-hidden size={15} />}
                 variant="flat"
@@ -236,7 +233,7 @@ export function AdminApprovalWorkspace() {
           {accountsQuery.isError ? (
             <EmptyPanel
               action={
-                <Button color="primary" radius="sm" size="sm" onPress={() => void accountsQuery.refetch()}>
+                <Button color="primary" radius="lg" size="sm" onPress={() => void accountsQuery.refetch()}>
                   {t("admin.retry")}
                 </Button>
               }
@@ -253,15 +250,17 @@ export function AdminApprovalWorkspace() {
             />
           ) : null}
           {!accountsQuery.isPending && !accountsQuery.isError && table.getRowModel().rows.length > 0 ? (
-            <Table
-              removeWrapper
-              aria-label={t("admin.pendingTitle")}
-              classNames={{
-                th: "border-b border-line bg-canvas px-3 py-2 first:pl-0 last:pr-0",
-                td: "border-b border-line px-3 py-4 align-middle first:pl-0 last:pr-0",
-                tr: "last:border-b-0",
-              }}
-            >
+            <div className="-mx-5 overflow-x-auto md:-mx-6">
+              <Table
+                removeWrapper
+                aria-label={t("admin.pendingTitle")}
+                className="min-w-[720px]"
+                classNames={{
+                  th: "border-b border-line bg-canvas px-3 py-2.5 first:pl-5 last:pr-5 md:first:pl-6 md:last:pr-6",
+                  td: "border-b border-line px-3 py-4 align-middle first:pl-5 last:pr-5 md:first:pl-6 md:last:pr-6",
+                  tr: "last:border-b-0 data-[hover=true]:bg-canvas",
+                }}
+              >
               <TableHeader>
                 <TableColumn>
                   <SortButton label={t("admin.account")} onPress={() => table.getColumn("fullName")?.toggleSorting()} />
@@ -295,9 +294,9 @@ export function AdminApprovalWorkspace() {
                       <TableCell>
                         <div className="flex justify-end gap-2">
                           <Button
-                            className="h-8 px-2.5 text-xs font-medium"
+                            className="h-8 px-3 text-xs font-medium"
                             color="danger"
-                            radius="sm"
+                            radius="lg"
                             size="sm"
                             startContent={<UserRoundX aria-hidden size={14} />}
                             variant="flat"
@@ -306,9 +305,9 @@ export function AdminApprovalWorkspace() {
                             {t("admin.reject")}
                           </Button>
                           <Button
-                            className="h-8 px-2.5 text-xs font-medium"
+                            className="h-8 px-3 text-xs font-medium"
                             color="primary"
-                            radius="sm"
+                            radius="lg"
                             size="sm"
                             startContent={<Check aria-hidden size={14} />}
                             onPress={() => openApproval(account)}
@@ -321,7 +320,8 @@ export function AdminApprovalWorkspace() {
                   );
                 })}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           ) : null}
         </WorkspacePanel>
       </section>
@@ -330,7 +330,7 @@ export function AdminApprovalWorkspace() {
         backdrop="opaque"
         classNames={adminModalClassNames}
         isOpen={approvalTarget !== null}
-        radius="sm"
+        radius="lg"
         scrollBehavior="inside"
         size="2xl"
         onOpenChange={(isOpen) => !isOpen && !approveMutation.isPending && setApprovalTarget(null)}
@@ -343,21 +343,19 @@ export function AdminApprovalWorkspace() {
                 approveMutation.mutate();
               }}
             >
-              <ModalHeader className="flex-col items-start gap-1 border-b border-line">
-                <span className="text-base font-semibold">{t("admin.approveTitle")}</span>
-                <span className="text-sm font-normal text-muted">{approvalTarget?.fullName}</span>
+              <ModalHeader className="flex-col items-start gap-1 border-b border-line px-6 py-5">
+                <span className="text-lg font-semibold leading-7">{t("admin.approveTitle")}</span>
+                <span className="text-sm font-normal leading-6 text-muted">{approvalTarget?.fullName}</span>
               </ModalHeader>
-              <ModalBody className="gap-5 py-6">
+              <ModalBody className="gap-5 px-6 py-6">
                 {optionsQuery.isPending ? <QueueSkeleton /> : null}
                 {optionsQuery.isError ? (
-                  <p aria-live="polite" className="text-sm text-danger">
-                    {getErrorMessage(optionsQuery.error, t)}
-                  </p>
+                  <FormError>{getErrorMessage(optionsQuery.error, t)}</FormError>
                 ) : null}
                 {!optionsQuery.isPending && !optionsQuery.isError ? (
                   <>
                     {!hasOrganizationOptions ? (
-                      <p className="border-l-2 border-warning bg-warning-50 px-3 py-2 text-sm leading-6 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300">
+                      <p className="rounded-lg border border-warning/30 bg-warning-50 px-3 py-2.5 text-sm leading-6 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300">
                         {t("admin.missingOptions")}
                       </p>
                     ) : null}
@@ -371,11 +369,12 @@ export function AdminApprovalWorkspace() {
                       <Select
                         isRequired
                         aria-label={t("admin.team")}
-                        classNames={adminSelectClassNames}
+                        classNames={selectFieldClassNames}
                         label={t("admin.team")}
                         labelPlacement="outside"
                         placeholder={t("admin.selectTeam")}
                         selectedKeys={approvalForm.teamId ? [approvalForm.teamId] : []}
+                        radius="lg"
                         variant="bordered"
                         onChange={(event) => setApprovalForm((form) => ({ ...form, teamId: event.target.value }))}
                       >
@@ -388,11 +387,12 @@ export function AdminApprovalWorkspace() {
                       <Select
                         isRequired
                         aria-label={t("admin.role")}
-                        classNames={adminSelectClassNames}
+                        classNames={selectFieldClassNames}
                         label={t("admin.role")}
                         labelPlacement="outside"
                         placeholder={t("admin.selectRole")}
                         selectedKeys={approvalForm.roleId ? [approvalForm.roleId] : []}
+                        radius="lg"
                         variant="bordered"
                         onChange={(event) => setApprovalForm((form) => ({ ...form, roleId: event.target.value }))}
                       >
@@ -402,11 +402,12 @@ export function AdminApprovalWorkspace() {
                       </Select>
                       <Select
                         aria-label={t("admin.manager")}
-                        classNames={adminSelectClassNames}
+                        classNames={selectFieldClassNames}
                         label={t("admin.manager")}
                         labelPlacement="outside"
                         placeholder={t("admin.noManager")}
                         selectedKeys={approvalForm.managerEmployeeId ? [approvalForm.managerEmployeeId] : []}
+                        radius="lg"
                         variant="bordered"
                         onChange={(event) =>
                           setApprovalForm((form) => ({ ...form, managerEmployeeId: event.target.value || null }))
@@ -434,20 +435,18 @@ export function AdminApprovalWorkspace() {
                   </>
                 ) : null}
                 {approveMutation.isError ? (
-                  <p aria-live="polite" className="text-sm text-danger">
-                    {getErrorMessage(approveMutation.error, t)}
-                  </p>
+                  <FormError>{getErrorMessage(approveMutation.error, t)}</FormError>
                 ) : null}
               </ModalBody>
-              <ModalFooter className="border-t border-line">
-                <Button radius="sm" variant="light" onPress={onClose}>
+              <ModalFooter className="border-t border-line px-6 py-4">
+                <Button radius="lg" variant="light" onPress={onClose}>
                   {t("admin.cancel")}
                 </Button>
                 <Button
                   color="primary"
                   isDisabled={!hasOrganizationOptions || optionsQuery.isPending}
                   isLoading={approveMutation.isPending}
-                  radius="sm"
+                  radius="lg"
                   type="submit"
                 >
                   {t("admin.approve")}
@@ -462,7 +461,7 @@ export function AdminApprovalWorkspace() {
         backdrop="opaque"
         classNames={adminModalClassNames}
         isOpen={rejectionTarget !== null}
-        radius="sm"
+        radius="lg"
         onOpenChange={(isOpen) => !isOpen && !rejectMutation.isPending && setRejectionTarget(null)}
       >
         <ModalContent>
@@ -473,37 +472,33 @@ export function AdminApprovalWorkspace() {
                 rejectMutation.mutate();
               }}
             >
-              <ModalHeader className="flex-col items-start gap-1 border-b border-line">
-                <span className="text-base font-semibold">{t("admin.rejectTitle")}</span>
-                <span className="text-sm font-normal text-muted">{rejectionTarget?.fullName}</span>
+              <ModalHeader className="flex-col items-start gap-1 border-b border-line px-6 py-5">
+                <span className="text-lg font-semibold leading-7">{t("admin.rejectTitle")}</span>
+                <span className="text-sm font-normal leading-6 text-muted">{rejectionTarget?.fullName}</span>
               </ModalHeader>
-              <ModalBody className="py-6">
+              <ModalBody className="px-6 py-6">
                 <Textarea
                   isRequired
-                  classNames={{
-                    inputWrapper: "rounded-sm border border-line bg-canvas shadow-none",
-                    label: "text-sm font-medium text-ink",
-                  }}
+                  classNames={textareaFieldClassNames}
                   label={t("admin.reason")}
                   labelPlacement="outside"
                   maxLength={500}
                   minRows={4}
                   placeholder={t("admin.reasonPlaceholder")}
                   value={rejectionReason}
+                  radius="lg"
                   variant="bordered"
                   onValueChange={setRejectionReason}
                 />
                 {rejectMutation.isError ? (
-                  <p aria-live="polite" className="text-sm text-danger">
-                    {getErrorMessage(rejectMutation.error, t)}
-                  </p>
+                  <FormError>{getErrorMessage(rejectMutation.error, t)}</FormError>
                 ) : null}
               </ModalBody>
-              <ModalFooter className="border-t border-line">
-                <Button radius="sm" variant="light" onPress={onClose}>
+              <ModalFooter className="border-t border-line px-6 py-4">
+                <Button radius="lg" variant="light" onPress={onClose}>
                   {t("admin.cancel")}
                 </Button>
-                <Button color="danger" isLoading={rejectMutation.isPending} radius="sm" type="submit">
+                <Button color="danger" isLoading={rejectMutation.isPending} radius="lg" type="submit">
                   {t("admin.reject")}
                 </Button>
               </ModalFooter>

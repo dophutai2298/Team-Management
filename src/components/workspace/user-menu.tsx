@@ -26,7 +26,7 @@ export function UserMenu() {
     <Dropdown
       classNames={{
         base: "z-[70]",
-        content: "border border-line bg-panel text-ink shadow-lg",
+        content: "rounded-lg border border-line bg-panel text-ink shadow-panel",
       }}
       placement="bottom-end"
     >

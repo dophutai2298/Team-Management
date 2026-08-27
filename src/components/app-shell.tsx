@@ -16,13 +16,13 @@ export function AppShell({
 
   return (
     <div className="min-h-[100dvh] bg-canvas text-ink">
-      <div className="mx-auto grid min-h-[100dvh] max-w-full lg:grid-cols-[248px_minmax(0,1fr)]">
+      <div className="grid min-h-[100dvh] lg:grid-cols-[264px_minmax(0,1fr)]">
         <SidebarNav canAccessAdmin={canAccessAdmin} isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
         <div className="min-w-0 overflow-x-hidden">
           <TopBar onOpenMenu={() => setMobileMenuOpen(true)} />
 
-          <main className="min-h-[calc(100dvh-3.5rem)] p-4 md:p-6 lg:p-8">{children}</main>
+          <main className="mx-auto min-h-[calc(100dvh-4rem)] w-full max-w-[1480px] p-4 md:p-6 lg:p-8">{children}</main>
         </div>
       </div>
     </div>

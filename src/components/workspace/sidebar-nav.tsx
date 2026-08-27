@@ -54,17 +54,17 @@ export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps)
         />
       ) : null}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-[min(84vw,280px)] flex-col border-r border-line bg-panel px-4 py-4 transition-transform duration-150 lg:sticky lg:top-0 lg:h-[100dvh] lg:w-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 flex w-[min(84vw,280px)] flex-col border-r border-line bg-panel px-3 py-4 transition-transform duration-150 lg:sticky lg:top-0 lg:h-[100dvh] lg:w-auto lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-10 items-center justify-between px-2">
+        <div className="flex h-12 items-center justify-between border-b border-line px-2 pb-3">
           <Link
-            className="flex min-w-0 items-center gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             href="/dashboard"
             onClick={onClose}
           >
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-primary text-xs font-bold text-primary-foreground">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-xs font-bold text-primary-foreground shadow-sm">
               TM
             </span>
             <span className="min-w-0">
@@ -77,7 +77,7 @@ export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps)
           </span>
         </div>
 
-        <nav aria-label={t("nav.primary")} className="mt-7 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+        <nav aria-label={t("nav.primary")} className="mt-5 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
           {navigation.map(({ key, href, icon: Icon, available, ...item }) => {
             const isAvailable = available && (!("requiresAdmin" in item) || !item.requiresAdmin || canAccessAdmin);
             const isActive = isAvailable && pathname === href;
@@ -99,7 +99,7 @@ export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps)
                 <div
                   key={href}
                   aria-disabled="true"
-                  className={`flex h-10 shrink-0 cursor-not-allowed items-center gap-3 rounded-sm px-3 text-sm text-muted opacity-70 ${
+                  className={`flex h-10 shrink-0 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm text-muted opacity-70 ${
                     pinToBottom ? "mt-auto border-t border-line pt-4" : ""
                   }`}
                 >
@@ -112,9 +112,9 @@ export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps)
               <Link
                 key={href}
                 aria-current={isActive ? "page" : undefined}
-                className={`relative flex h-10 items-center gap-3 rounded-sm px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                className={`relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   isActive
-                    ? "bg-primary/10 text-primary before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:bg-primary"
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted hover:bg-canvas hover:text-ink"
                 }`}
                 href={href}

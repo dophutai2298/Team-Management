@@ -11,8 +11,8 @@ type WorkspacePanelProps = {
 
 export function WorkspacePanel({ id, title, description, action, children }: WorkspacePanelProps) {
   return (
-    <Card className="border border-line bg-panel shadow-none" radius="sm">
-      <CardHeader className="flex min-h-16 items-center justify-between gap-4 px-5 py-4 md:px-6">
+    <Card className="border border-line bg-panel shadow-panel" radius="lg">
+      <CardHeader className="flex min-h-[72px] items-center justify-between gap-4 px-5 py-4 md:px-6">
         <div className="min-w-0">
           <h2 id={id} className="text-base font-semibold leading-6 text-ink">
             {title}

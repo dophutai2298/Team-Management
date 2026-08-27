@@ -61,6 +61,7 @@ const englishMessages = {
   "dashboard.openTasks": "Open tasks",
   "dashboard.dueThisWeek": "Due this week",
   "dashboard.completionRate": "Completion rate",
+  "dashboard.metricAwaitingData": "No data yet",
   "dashboard.emptyTitle": "Your dashboard is ready",
   "dashboard.emptyDescription": "Team activity will appear here when the first workflows are connected.",
   "dashboard.priorityTitle": "Needs attention",
@@ -231,6 +232,7 @@ const vietnameseMessages: Partial<Record<MessageKey, string>> = {
   "dashboard.openTasks": "Công việc đang mở",
   "dashboard.dueThisWeek": "Đến hạn trong tuần",
   "dashboard.completionRate": "Tỷ lệ hoàn thành",
+  "dashboard.metricAwaitingData": "Chưa có dữ liệu",
 
   "dashboard.emptyTitle": "Bảng điều khiển đã sẵn sàng",
   "dashboard.emptyDescription":

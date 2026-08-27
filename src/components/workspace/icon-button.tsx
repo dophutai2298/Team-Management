@@ -23,9 +23,9 @@ export function IconButton({
       <Button
         isIconOnly
         aria-label={label}
-        className={`h-9 w-9 min-w-9 border border-line bg-panel text-ink ${className ?? ""}`}
+        className={`h-9 w-9 min-w-9 rounded-lg border border-line bg-panel text-ink shadow-sm ${className ?? ""}`}
         isDisabled={isDisabled}
-        radius="sm"
+        radius="lg"
         variant="flat"
         onPress={onPress}
       >

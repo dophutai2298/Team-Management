@@ -21,7 +21,7 @@ const statusColors: Record<WorkspaceStatus, "success" | "warning" | "danger"> = 
 
 export function StatusList({ items }: StatusListProps) {
   return (
-    <ul className="mt-2 space-y-1" aria-live="polite">
+    <ul className="mt-1 space-y-1" aria-live="polite">
       {items.map((item, index) => (
         <li key={item.label}>
           {index > 0 ? <Divider className="bg-line" /> : null}
@@ -33,7 +33,7 @@ export function StatusList({ items }: StatusListProps) {
             <Chip
               className="h-6 shrink-0 border-0 px-2 text-[11px] font-medium"
               color={statusColors[item.status]}
-              radius="sm"
+              radius="full"
               size="sm"
               variant="flat"
             >

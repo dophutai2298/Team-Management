@@ -24,7 +24,7 @@ export function LocaleSwitcher() {
     <Dropdown
       classNames={{
         base: "z-[70]",
-        content: "border border-line bg-panel text-ink shadow-lg",
+        content: "rounded-lg border border-line bg-panel text-ink shadow-panel",
       }}
       placement="bottom-end"
     >
@@ -32,7 +32,7 @@ export function LocaleSwitcher() {
         <Button
           aria-label={t("header.language")}
           className="relative z-20 h-9 min-w-16 border border-line !bg-panel px-2.5 text-ink shadow-sm"
-          radius="sm"
+          radius="lg"
           startContent={<Languages aria-hidden size={16} />}
           variant="flat"
         >
