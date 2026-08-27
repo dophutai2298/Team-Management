@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-[100dvh] bg-canvas text-ink">
-      <div className="mx-auto grid min-h-[100dvh] max-w-[1600px] lg:grid-cols-[248px_minmax(0,1fr)]">
+      <div className="mx-auto grid min-h-[100dvh] max-w-full lg:grid-cols-[248px_minmax(0,1fr)]">
         {mobileMenuOpen ? (
           <button
             aria-label={t("header.closeMenu")}
