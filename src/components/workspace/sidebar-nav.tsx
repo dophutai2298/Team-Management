@@ -30,15 +30,16 @@ const navigation = [
   { key: "nav.notifications", href: "/notifications", icon: Bell, available: false },
   { key: "nav.todo", href: "/todo", icon: ListTodo, available: false },
   { key: "nav.focus", href: "/focus", icon: Timer, available: false },
-  { key: "nav.admin", href: "/admin", icon: ShieldCheck, available: false, pinToBottom: true },
+  { key: "nav.admin", href: "/admin", icon: ShieldCheck, available: true, requiresAdmin: true, pinToBottom: true },
 ] as const;
 
 type SidebarNavProps = {
   isOpen: boolean;
   onClose: () => void;
+  canAccessAdmin: boolean;
 };
 
-export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
+export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps) {
   const pathname = usePathname();
   const { t } = useLocale();
 
@@ -78,13 +79,14 @@ export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
 
         <nav aria-label={t("nav.primary")} className="mt-7 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
           {navigation.map(({ key, href, icon: Icon, available, ...item }) => {
-            const isActive = available && pathname === href;
+            const isAvailable = available && (!("requiresAdmin" in item) || !item.requiresAdmin || canAccessAdmin);
+            const isActive = isAvailable && pathname === href;
             const pinToBottom = "pinToBottom" in item && item.pinToBottom;
             const content = (
               <>
                 <Icon aria-hidden size={17} strokeWidth={1.8} />
                 <span className="min-w-0 flex-1 truncate">{t(key as MessageKey)}</span>
-                {!available ? (
+                {!isAvailable ? (
                   <Chip className="h-5 bg-canvas px-1 text-[10px] text-muted" radius="sm" size="sm">
                     {t("nav.soon")}
                   </Chip>
@@ -92,7 +94,7 @@ export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
               </>
             );
 
-            if (!available) {
+            if (!isAvailable) {
               return (
                 <div
                   key={href}

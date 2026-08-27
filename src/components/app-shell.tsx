@@ -5,13 +5,19 @@ import { useState } from "react";
 import { SidebarNav } from "./workspace/sidebar-nav";
 import { TopBar } from "./workspace/top-bar";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  canAccessAdmin,
+}: {
+  children: React.ReactNode;
+  canAccessAdmin: boolean;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-[100dvh] bg-canvas text-ink">
       <div className="mx-auto grid min-h-[100dvh] max-w-full lg:grid-cols-[248px_minmax(0,1fr)]">
-        <SidebarNav isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+        <SidebarNav canAccessAdmin={canAccessAdmin} isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
         <div className="min-w-0 overflow-x-hidden">
           <TopBar onOpenMenu={() => setMobileMenuOpen(true)} />
