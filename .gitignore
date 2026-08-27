@@ -46,6 +46,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# InsForge & AI agent skills
+/.agent
 /.agents
+/.augment
+/.claude
+/.cline
+/.github/copilot*
 /.insforge
-/.next
+/.kilocode
+/.qoder
+/.qwen
+/.roo
+/.trae
+/.windsurf

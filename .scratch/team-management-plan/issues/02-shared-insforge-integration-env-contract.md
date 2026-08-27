@@ -4,10 +4,10 @@
 
 **Blocked by:** 01: Foundation app shell, providers, and API contract.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Environment variables required for InsForge are documented and validated at startup.
-- [ ] Browser, server user-scoped, and server-only admin InsForge clients are separated clearly.
-- [ ] Server-only credentials are never exposed to the client bundle.
-- [ ] Repository/service code can reuse shared InsForge clients without repeated initialization.
-- [ ] A health-check or equivalent smoke path verifies the app can reach the configured backend.
+- [x] Environment variables required for InsForge are documented and validated at startup.
+- [x] Browser, server user-scoped, and server-only admin InsForge clients are separated clearly.
+- [x] Server-only credentials are never exposed to the client bundle.
+- [x] Repository/service code can reuse shared InsForge clients without repeated initialization.
+- [x] A health-check or equivalent smoke path verifies the app can reach the configured backend.
