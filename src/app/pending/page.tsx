@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 
+import { AccessStatus } from "@/components/auth-shell";
 import { getCurrentActor } from "@/lib/auth/session";
 
-export default async function HomePage() {
+export default async function PendingPage() {
   const actor = await getCurrentActor();
 
   if (!actor) {
@@ -13,5 +14,9 @@ export default async function HomePage() {
     redirect("/dashboard");
   }
 
-  redirect(actor.access.kind === "pending_approval" ? "/pending" : "/account-status");
+  if (actor.access.kind !== "pending_approval") {
+    redirect("/account-status");
+  }
+
+  return <AccessStatus kind="pending" />;
 }

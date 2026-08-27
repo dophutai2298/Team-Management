@@ -4,7 +4,7 @@
 
 **Blocked by:** 02: Shared InsForge integration and env contract.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Users can register with an allowed company email domain and submit an employee code claim.
 - [ ] Email OTP verification moves the account into pending approval.
