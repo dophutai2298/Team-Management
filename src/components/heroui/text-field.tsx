@@ -2,19 +2,15 @@
 
 import { Input, type InputProps } from "@heroui/react";
 
-import { inputFieldClassNames } from "./form-field-styles";
+import { inputFieldClassNames } from "./field-styles";
 
-type TextFieldProps = InputProps;
-
-export function TextField({ classNames: userClassNames, type, ...props }: TextFieldProps) {
+export function TextField({ classNames: userClassNames, ...props }: InputProps) {
   return (
     <Input
       {...props}
       classNames={{ ...inputFieldClassNames, ...userClassNames }}
-      color="primary"
       labelPlacement="outside-top"
       radius="lg"
-      type={type}
       variant="bordered"
     />
   );
