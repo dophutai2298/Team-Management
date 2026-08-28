@@ -47,7 +47,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid rgb(15 92 69);
+  /* outline: 2px solid rgb(15 92 69); */
   outline-offset: 2px;
 }
 
