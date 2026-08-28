@@ -35,12 +35,12 @@ const paginationControlClassNames = {
   base: "m-0 overflow-visible p-0",
   wrapper: "gap-1",
   item:
-    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-xs text-ink shadow-none data-[active=true]:text-primary-foreground data-[hover=true]:border-primary/45 data-[hover=true]:bg-panel",
+    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-xs text-ink shadow-none data-[active=true]:text-primary-foreground data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
   cursor: "h-8 min-h-8 w-8 min-w-8 rounded-lg bg-primary text-primary-foreground shadow-none",
   prev:
-    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-panel",
+    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
   next:
-    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-panel",
+    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
 } as const;
 
 type PendingAccountsTableProps = {
@@ -156,7 +156,8 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
         <Input
           aria-label={t("admin.search")}
           classNames={{
-            inputWrapper: "h-10 rounded-lg border border-line bg-panel shadow-none data-[hover=true]:border-primary/45",
+            inputWrapper:
+              "h-10 rounded-lg border border-line bg-canvas shadow-none outline-none data-[hover=true]:border-primary/45 group-data-[focus=true]:border-primary group-data-[focus=true]:shadow-[0_0_0_3px_rgb(15_92_69_/_0.12)] group-data-[focus-visible=true]:outline-none",
             input: "text-sm text-ink placeholder:text-muted",
           }}
           placeholder={t("admin.searchPlaceholder")}
@@ -168,8 +169,13 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
         />
         <Select
           aria-label={t("admin.requestFilter")}
-          classNames={{ ...selectFieldClassNames, trigger: "h-10 min-h-10 rounded-lg border border-line bg-panel" }}
+          classNames={{
+            ...selectFieldClassNames,
+            trigger:
+              "h-10 min-h-10 rounded-lg border border-line bg-canvas px-3 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(15_92_69_/_0.12)] data-[focus-visible=true]:outline-none",
+          }}
           placeholder={t("admin.allDates")}
+          popoverProps={{ classNames: selectPopoverClassNames }}
           radius="lg"
           selectedKeys={[requestedAtFilter ? String(requestedAtFilter) : "all"]}
           size="sm"
@@ -268,7 +274,8 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
             aria-label={t("admin.rowsPerPage")}
             classNames={{
               ...selectFieldClassNames,
-              trigger: "h-9 min-h-9 w-[76px] rounded-lg border border-line !bg-canvas px-2 shadow-none",
+              trigger:
+                "h-9 min-h-9 w-[76px] rounded-lg border border-line !bg-canvas px-2 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(15_92_69_/_0.12)] data-[focus-visible=true]:outline-none",
             }}
             popoverProps={{ classNames: selectPopoverClassNames }}
             selectedKeys={[String(table.getState().pagination.pageSize)]}

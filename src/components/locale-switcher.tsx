@@ -31,7 +31,7 @@ export function LocaleSwitcher() {
       <DropdownTrigger>
         <Button
           aria-label={t("header.language")}
-          className="relative z-20 h-9 min-w-16 border border-line !bg-panel px-2.5 text-ink shadow-sm"
+          className="relative z-20 h-9 min-w-16 border border-line !bg-canvas px-2.5 text-ink shadow-sm"
           radius="lg"
           startContent={<Languages aria-hidden size={16} />}
           variant="flat"

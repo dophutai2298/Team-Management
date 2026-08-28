@@ -33,7 +33,7 @@ export function UserMenu() {
       <DropdownTrigger>
         <button
           aria-label={t("header.profile")}
-          className="relative z-20 rounded-full border border-line bg-panel p-0.5 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="relative z-20 rounded-full border border-line bg-canvas p-0.5 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           type="button"
         >
           <Avatar className="h-9 w-9 bg-primary text-xs text-primary-foreground" name="TA" />
