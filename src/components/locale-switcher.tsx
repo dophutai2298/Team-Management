@@ -21,12 +21,18 @@ export function LocaleSwitcher() {
   const { locale, setLocale, t } = useLocale();
 
   return (
-    <Dropdown placement="bottom-end">
+    <Dropdown
+      classNames={{
+        base: "z-[70]",
+        content: "rounded-lg border border-line bg-panel text-ink shadow-panel",
+      }}
+      placement="bottom-end"
+    >
       <DropdownTrigger>
         <Button
           aria-label={t("header.language")}
-          className="h-9 min-w-16 border border-line bg-panel px-2.5 text-ink"
-          radius="sm"
+          className="relative z-20 h-9 min-w-16 border border-line !bg-panel px-2.5 text-ink shadow-sm"
+          radius="lg"
           startContent={<Languages aria-hidden size={16} />}
           variant="flat"
         >

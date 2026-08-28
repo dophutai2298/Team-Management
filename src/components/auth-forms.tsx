@@ -11,6 +11,7 @@ import { getSafeInternalPath } from "@/lib/auth/access";
 import { useLocale } from "@/lib/i18n/locale-provider";
 
 import { AuthBackLink, AuthShell } from "./auth-shell";
+import { FormError } from "./ui/form-error";
 import { TextField } from "./ui/text-field";
 
 type AuthResult = { next: string; access?: string; email?: string };
@@ -42,7 +43,7 @@ export function SignInForm() {
   return (
     <AuthShell description={t("auth.signInDescription")} title={t("auth.signInTitle")}>
       <form
-        className="space-y-4"
+        className="space-y-5"
         onSubmit={(event) => {
           event.preventDefault();
           signIn.mutate();
@@ -64,12 +65,12 @@ export function SignInForm() {
           value={password}
           onValueChange={setPassword}
         />
-        {signIn.isError ? <p aria-live="polite" className="text-sm text-danger">{getErrorMessage(signIn.error)}</p> : null}
-        <Button className="h-10 w-full font-medium" color="primary" isLoading={signIn.isPending} radius="sm" type="submit">
+        {signIn.isError ? <FormError>{getErrorMessage(signIn.error)}</FormError> : null}
+        <Button className="h-11 w-full font-semibold" color="primary" isLoading={signIn.isPending} radius="lg" type="submit">
           {signIn.isPending ? t("auth.loading") : t("auth.signIn")}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted">
+      <p className="mt-7 border-t border-line pt-5 text-center text-sm text-muted">
         {t("auth.needAccount")} {" "}
         <Link className="font-medium text-primary" href="/register">
           {t("auth.createAccount")}
@@ -99,7 +100,7 @@ export function RegistrationForm() {
   return (
     <AuthShell description={t("auth.registerDescription")} title={t("auth.registerTitle")}>
       <form
-        className="space-y-4"
+        className="space-y-5"
         onSubmit={(event) => {
           event.preventDefault();
           register.mutate();
@@ -129,12 +130,12 @@ export function RegistrationForm() {
           value={password}
           onValueChange={setPassword}
         />
-        {register.isError ? <p aria-live="polite" className="text-sm text-danger">{getErrorMessage(register.error)}</p> : null}
-        <Button className="h-10 w-full font-medium" color="primary" isLoading={register.isPending} radius="sm" type="submit">
+        {register.isError ? <FormError>{getErrorMessage(register.error)}</FormError> : null}
+        <Button className="h-11 w-full font-semibold" color="primary" isLoading={register.isPending} radius="lg" type="submit">
           {register.isPending ? t("auth.loading") : t("auth.register")}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted">
+      <p className="mt-7 border-t border-line pt-5 text-center text-sm text-muted">
         {t("auth.haveAccount")} {" "}
         <Link className="font-medium text-primary" href="/login">
           {t("auth.signIn")}
@@ -162,9 +163,9 @@ export function VerifyEmailForm() {
 
   return (
     <AuthShell description={t("auth.verifyDescription")} title={t("auth.verifyTitle")}>
-      <p className="mb-5 text-sm text-muted">{t("auth.checkEmail")}</p>
+      <p className="mb-6 rounded-lg border border-primary/15 bg-primary/5 px-3 py-2.5 text-sm leading-6 text-muted">{t("auth.checkEmail")}</p>
       <form
-        className="space-y-4"
+        className="space-y-5"
         onSubmit={(event) => {
           event.preventDefault();
           verify.mutate();
@@ -187,8 +188,8 @@ export function VerifyEmailForm() {
           value={otp}
           onValueChange={(value) => setOtp(value.replace(/\D/g, "").slice(0, 6))}
         />
-        {verify.isError ? <p aria-live="polite" className="text-sm text-danger">{getErrorMessage(verify.error)}</p> : null}
-        <Button className="h-10 w-full font-medium" color="primary" isLoading={verify.isPending} radius="sm" type="submit">
+        {verify.isError ? <FormError>{getErrorMessage(verify.error)}</FormError> : null}
+        <Button className="h-11 w-full font-semibold" color="primary" isLoading={verify.isPending} radius="lg" type="submit">
           {verify.isPending ? t("auth.loading") : t("auth.verify")}
         </Button>
       </form>

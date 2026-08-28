@@ -24,9 +24,9 @@ export function ThemeToggle() {
       <Button
         isIconOnly
         aria-label={label}
-        className="h-9 w-9 min-w-9 border border-line bg-panel text-ink"
+        className="h-9 w-9 min-w-9 border border-line bg-panel text-ink shadow-sm"
         isDisabled={!mounted}
-        radius="sm"
+        radius="lg"
         variant="flat"
         onPress={() => setTheme(isDark ? "light" : "dark")}
       >

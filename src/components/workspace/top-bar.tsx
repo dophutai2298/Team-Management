@@ -1,7 +1,8 @@
 "use client";
 
-import { BreadcrumbItem, Breadcrumbs, Button } from "@heroui/react";
-import { Bell, Menu, Plus } from "lucide-react";
+import { BreadcrumbItem, Breadcrumbs } from "@heroui/react";
+import { Bell, Menu } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { useLocale } from "@/lib/i18n/locale-provider";
 
@@ -16,9 +17,11 @@ type TopBarProps = {
 
 export function TopBar({ onOpenMenu }: TopBarProps) {
   const { t } = useLocale();
+  const pathname = usePathname();
+  const pageTitle = pathname.startsWith("/admin") ? t("nav.admin") : t("nav.overview");
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-line bg-panel px-4 md:px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-line bg-panel px-4 md:px-6 lg:px-8">
       <span className="lg:hidden">
         <IconButton icon={Menu} label={t("header.openMenu")} onPress={onOpenMenu} />
       </span>
@@ -31,18 +34,9 @@ export function TopBar({ onOpenMenu }: TopBarProps) {
         separator="/"
       >
         <BreadcrumbItem className="text-sm text-muted">{t("header.breadcrumbWorkspace")}</BreadcrumbItem>
-        <BreadcrumbItem className="text-sm font-medium text-ink">{t("dashboard.title")}</BreadcrumbItem>
+        <BreadcrumbItem className="text-sm font-medium text-ink">{pageTitle}</BreadcrumbItem>
       </Breadcrumbs>
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        <Button
-          className="hidden h-9 px-3 text-sm font-medium sm:inline-flex"
-          color="primary"
-          radius="sm"
-          size="sm"
-          startContent={<Plus aria-hidden size={16} />}
-        >
-          {t("dashboard.quickAction")}
-        </Button>
         <LocaleSwitcher />
         <ThemeToggle />
         <span className="hidden sm:inline-flex">

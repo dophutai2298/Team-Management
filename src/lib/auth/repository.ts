@@ -13,6 +13,7 @@ export type EmployeeAccount = {
   employeeCode: string | null;
   accountStatus: AccountStatus;
   locale: "vi" | "en";
+  isAdmin: boolean;
 };
 
 type EmployeeRow = {
@@ -24,6 +25,7 @@ type EmployeeRow = {
   employee_code: string | null;
   account_status: AccountStatus;
   locale: "vi" | "en";
+  is_admin: boolean;
 };
 
 type RegistrationClaimRow = {
@@ -42,6 +44,7 @@ function toEmployeeAccount(row: EmployeeRow): EmployeeAccount {
     employeeCode: row.employee_code,
     accountStatus: row.account_status,
     locale: row.locale,
+    isAdmin: row.is_admin,
   };
 }
 
@@ -110,7 +113,7 @@ export async function createPendingEmployee(
       { onConflict: "auth_user_id" },
     )
     .select(
-      "id, auth_user_id, email, full_name, employee_code_claim, employee_code, account_status, locale",
+      "id, auth_user_id, email, full_name, employee_code_claim, employee_code, account_status, locale, is_admin",
     )
     .single();
 
@@ -136,7 +139,7 @@ export async function getEmployeeAccount(authUserId: string): Promise<EmployeeAc
   const { data, error } = await getInsForgeAdminClient().database
     .from("employees")
     .select(
-      "id, auth_user_id, email, full_name, employee_code_claim, employee_code, account_status, locale",
+      "id, auth_user_id, email, full_name, employee_code_claim, employee_code, account_status, locale, is_admin",
     )
     .eq("auth_user_id", authUserId)
     .maybeSingle();

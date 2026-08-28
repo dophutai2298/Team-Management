@@ -1,8 +1,8 @@
 "use client";
 
-import { Button, ButtonGroup, Chip, Skeleton } from "@heroui/react";
+import { Button, Skeleton } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Plus, RefreshCw } from "lucide-react";
+import { CheckCircle2, RefreshCw } from "lucide-react";
 
 import { fetchApi } from "@/lib/api/client";
 import type { HealthStatus } from "@/lib/api/health";
@@ -59,7 +59,7 @@ function WorkspaceStatus() {
           healthQuery.isError ? (
             <Button
               color="danger"
-              radius="sm"
+              radius="lg"
               size="sm"
               startContent={<RefreshCw aria-hidden size={14} />}
               variant="flat"
@@ -73,9 +73,6 @@ function WorkspaceStatus() {
         title={t("dashboard.healthTitle")}
       >
         <StatusList items={items} />
-        <Button className="mt-3 px-0" color="primary" radius="sm" size="sm" variant="light">
-          {t("dashboard.systemDetails")}
-        </Button>
       </WorkspacePanel>
     </aside>
   );
@@ -83,7 +80,11 @@ function WorkspaceStatus() {
 
 export function DashboardOverview() {
   const { t } = useLocale();
-  const metrics = metricLabels.map((label) => ({ label: t(label as MessageKey), value: "--" }));
+  const metrics = metricLabels.map((label) => ({
+    label: t(label as MessageKey),
+    value: t("dashboard.metricAwaitingData"),
+    isPlaceholder: true,
+  }));
 
   return (
     <div className="mx-auto w-full max-w-[1320px]">
@@ -91,54 +92,16 @@ export function DashboardOverview() {
         eyebrow={t("dashboard.eyebrow")}
         title={t("dashboard.greeting")}
         description={t("dashboard.description")}
-        actions={
-          <ButtonGroup radius="sm" size="sm">
-            <Button className="h-9 px-3" variant="flat">
-              {t("dashboard.today")}
-            </Button>
-            <Button
-              className="h-9 px-3 font-medium"
-              color="primary"
-              startContent={<Plus aria-hidden size={16} />}
-            >
-              {t("dashboard.quickAction")}
-            </Button>
-          </ButtonGroup>
-        }
       />
 
-      <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-line pb-5 text-sm">
-        <Chip
-          className="h-6 border-0 px-2 text-[11px] font-medium"
-          color="success"
-          radius="sm"
-          size="sm"
-          startContent={<CheckCircle2 aria-hidden size={13} />}
-          variant="flat"
-        >
-          {t("dashboard.onTrackTitle")}
-        </Chip>
-        <p className="text-muted">{t("dashboard.onTrackDescription")}</p>
-      </div>
-
-      <div className="mt-6">
+      <div className="mt-7">
         <MetricGrid ariaLabel={t("dashboard.title")} metrics={metrics} />
       </div>
 
-      <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,0.72fr)]">
+      <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,0.72fr)]">
         <section aria-labelledby="priority-title">
           <WorkspacePanel id="priority-title" title={t("dashboard.priorityTitle")}>
             <EmptyPanel
-              action={
-                <Button
-                  color="primary"
-                  radius="sm"
-                  size="sm"
-                  startContent={<Plus aria-hidden size={15} />}
-                >
-                  {t("dashboard.priorityAction")}
-                </Button>
-              }
               description={t("dashboard.priorityEmptyDescription")}
               icon={CheckCircle2}
               title={t("dashboard.priorityEmpty")}
@@ -156,21 +119,21 @@ export function DashboardOverviewSkeleton() {
     <div className="mx-auto w-full max-w-[1320px]" aria-busy="true">
       <div className="border-b border-line pb-6">
         <Skeleton className="h-3 w-32 rounded-sm" />
-        <Skeleton className="mt-3 h-9 w-72 max-w-full rounded-sm" />
-        <Skeleton className="mt-3 h-4 w-full max-w-xl rounded-sm" />
+        <Skeleton className="mt-3 h-9 w-72 max-w-full rounded-lg" />
+        <Skeleton className="mt-3 h-4 w-full max-w-xl rounded-lg" />
       </div>
       <Skeleton className="mt-6 h-12 rounded-none" />
       <div className="mt-6 grid grid-cols-2 border border-line md:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
           <div key={index} className="border-b border-line p-4 odd:border-r odd:border-line last:border-b-0 md:border-b-0 md:[&:not(:last-child)]:border-r">
-            <Skeleton className="h-3 w-24 rounded-sm" />
-            <Skeleton className="mt-3 h-6 w-14 rounded-sm" />
+            <Skeleton className="h-3 w-24 rounded-lg" />
+            <Skeleton className="mt-3 h-6 w-14 rounded-lg" />
           </div>
         ))}
       </div>
       <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,0.72fr)]">
-        <Skeleton className="h-80 rounded-none" />
-        <Skeleton className="h-80 rounded-none" />
+        <Skeleton className="h-80 rounded-lg" />
+        <Skeleton className="h-80 rounded-lg" />
       </div>
     </div>
   );

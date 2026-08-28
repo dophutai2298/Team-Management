@@ -15,5 +15,5 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     redirect(getAccountDestination(actor.access));
   }
 
-  return <AppShell>{children}</AppShell>;
+  return <AppShell canAccessAdmin={actor.employee?.isAdmin === true}>{children}</AppShell>;
 }

@@ -49,8 +49,9 @@ export async function POST(request: NextRequest) {
     password: validation.value.password,
     name: validation.value.fullName,
   });
+  const registrationAccepted = data?.requireEmailVerification === true || Boolean(data?.user?.id);
 
-  if (error || !data?.user?.id) {
+  if (error || !registrationAccepted) {
     return createAuthFailure(
       error?.statusCode === 409 ? "EMAIL_ALREADY_REGISTERED" : "REGISTRATION_FAILED",
       error?.statusCode === 409
