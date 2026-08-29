@@ -24,7 +24,7 @@ import { IconButton } from "./icon-button";
 const navigation = [
   { key: "nav.overview", href: "/dashboard", icon: LayoutDashboard, available: true },
   { key: "nav.organization", href: "/organization", icon: Building2, available: false },
-  { key: "nav.employees", href: "/employees", icon: Users, available: false },
+  { key: "nav.employees", href: "/employees", icon: Users, available: true, requiresAdmin: true },
   { key: "nav.tasks", href: "/tasks", icon: CheckSquare2, available: false },
   { key: "nav.calendar", href: "/calendar", icon: CalendarDays, available: false },
   { key: "nav.notifications", href: "/notifications", icon: Bell, available: false },

@@ -18,7 +18,13 @@ type TopBarProps = {
 export function TopBar({ onOpenMenu }: TopBarProps) {
   const { t } = useLocale();
   const pathname = usePathname();
-  const pageTitle = pathname.startsWith("/admin") ? t("nav.admin") : t("nav.overview");
+  const pageTitle = pathname.startsWith("/admin")
+    ? t("nav.admin")
+    : pathname.startsWith("/employees")
+      ? t("nav.employees")
+      : pathname.startsWith("/profile")
+        ? t("profile.title")
+        : t("nav.overview");
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-line bg-panel px-4 md:px-6 lg:px-8">
