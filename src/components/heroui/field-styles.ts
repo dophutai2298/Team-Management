@@ -9,7 +9,7 @@ export const inputFieldClassNames = {
 } as const;
 
 export const selectFieldClassNames = {
-  base: "!mt-0 flex w-full flex-col gap-2",
+  base: "!mt-0 flex w-full flex-col gap-2 justify-start",
   label: "!relative !start-auto !top-auto !translate-y-0 z-auto block text-sm font-semibold leading-5 text-ink",
   mainWrapper: "w-full",
   trigger:
