@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { validateRejectionInput } from "@/lib/admin/approval";
-import { requireAdminActor } from "@/lib/admin/access";
 import { adminRouteFailure } from "@/lib/admin/http";
 import { rejectPendingAccount } from "@/lib/admin/repository";
 import { apiFailure, apiSuccess, type ApiResponse } from "@/lib/api/response";
+import { requireAuthorizedActor } from "@/lib/authorization/access";
 import { readJsonBody } from "@/lib/auth/http";
 
 type RouteContext = { params: Promise<{ employeeId: string }> };
@@ -23,7 +23,7 @@ export async function POST(
   }
 
   try {
-    const actor = await requireAdminActor();
+    const actor = await requireAuthorizedActor("reject", "account", { employeeId });
     await rejectPendingAccount(actor.authUserId, employeeId, validation.value, crypto.randomUUID());
 
     return NextResponse.json(apiSuccess({ id: employeeId, accountStatus: "disabled" }));

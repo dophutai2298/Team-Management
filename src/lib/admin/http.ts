@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { apiFailure, type ApiResponse } from "@/lib/api/response";
-
-import { AdminAccessError } from "./access";
+import { AuthorizationError } from "@/lib/authorization/authorization";
 
 export function adminRouteFailure(error: unknown): NextResponse<ApiResponse<never>> {
-  if (error instanceof AdminAccessError) {
-    return NextResponse.json(apiFailure(error.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN", error.message), {
-      status: error.status,
-    });
+  if (error instanceof AuthorizationError) {
+    return NextResponse.json(apiFailure(error.code, error.message), { status: error.status });
   }
 
   const databaseCode =
