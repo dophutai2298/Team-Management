@@ -4,7 +4,7 @@ import { Button, type ButtonProps } from "@heroui/react";
 
 export function ActionButton({ className, radius = "lg", ...props }: ButtonProps) {
   const classes = [
-    "font-semibold shadow-none transition-transform data-[pressed=true]:scale-[0.98]",
+    "font-semibold shadow-none transition-transform data-[pressed=true]:scale-[0.98] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
     className,
   ]
     .filter(Boolean)

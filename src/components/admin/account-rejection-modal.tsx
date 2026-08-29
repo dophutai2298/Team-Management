@@ -59,10 +59,10 @@ export function AccountRejectionModal({ account, error, isSubmitting, onClose, o
             {error ? <FormError>{error}</FormError> : null}
           </ModalBody>
           <ModalFooter className="border-t border-line bg-panel px-5 py-4 sm:px-6">
-            <ActionButton isDisabled={isSubmitting} variant="light" onPress={onClose}>
+            <ActionButton color="secondary" isDisabled={isSubmitting}  onPress={onClose}>
               {t("admin.cancel")}
             </ActionButton>
-            <ActionButton color="danger" isLoading={isSubmitting} type="submit">
+            <ActionButton   color="primary" isLoading={isSubmitting} type="submit">
               {t("admin.reject")}
             </ActionButton>
           </ModalFooter>
