@@ -2,13 +2,17 @@
 
 import { Button, type ButtonProps } from "@heroui/react";
 
-export function ActionButton({ className, radius = "lg", ...props }: ButtonProps) {
+export function ActionButton({ className, color, radius = "lg", variant, ...props }: ButtonProps) {
+  const isPrimary = color === "primary" && (!variant || variant === "solid");
   const classes = [
-    "font-semibold shadow-none transition-transform data-[pressed=true]:scale-[0.98] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+    "cursor-pointer font-semibold transition-all duration-200 ease-out data-[hover=true]:-translate-y-0.5 data-[pressed=true]:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
+    isPrimary
+      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-button data-[hover=true]:shadow-lift"
+      : "shadow-none",
     className,
   ]
     .filter(Boolean)
     .join(" ");
 
-  return <Button {...props} className={classes} radius={radius} />;
+  return <Button {...props} className={classes} color={color} radius={radius} variant={variant} />;
 }

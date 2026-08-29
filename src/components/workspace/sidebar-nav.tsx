@@ -54,21 +54,21 @@ export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps)
         />
       ) : null}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-[min(84vw,280px)] flex-col border-r border-line bg-panel px-3 py-4 transition-transform duration-150 lg:sticky lg:top-0 lg:h-[100dvh] lg:w-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 flex w-[min(84vw,280px)] flex-col border-r border-line/85 bg-panel/95 px-3 py-4 shadow-lift backdrop-blur transition-transform duration-150 lg:sticky lg:top-0 lg:h-[100dvh] lg:w-auto lg:translate-x-0 lg:shadow-none ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-12 items-center justify-between border-b border-line px-2 pb-3">
+        <div className="flex h-12 items-center justify-between border-b border-line/85 px-2 pb-3">
           <Link
             className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             href="/dashboard"
             onClick={onClose}
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-xs font-bold text-primary-foreground shadow-sm">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-xs font-bold text-white shadow-button">
               TM
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold leading-5 text-ink">{t("app.name")}</span>
+              <span className="block truncate text-sm font-bold leading-5 text-ink">{t("app.name")}</span>
               <span className="block truncate text-xs leading-4 text-muted">{t("app.workspace")}</span>
             </span>
           </Link>
@@ -87,7 +87,7 @@ export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps)
                 <Icon aria-hidden size={17} strokeWidth={1.8} />
                 <span className="min-w-0 flex-1 truncate">{t(key as MessageKey)}</span>
                 {!isAvailable ? (
-                  <Chip className="h-5 bg-canvas px-1 text-[10px] text-muted" radius="sm" size="sm">
+                  <Chip className="h-5 border border-line/70 bg-panel px-1 text-[10px] text-muted" radius="sm" size="sm" variant="flat">
                     {t("nav.soon")}
                   </Chip>
                 ) : null}
@@ -100,7 +100,7 @@ export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps)
                   key={href}
                   aria-disabled="true"
                   className={`flex h-10 shrink-0 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm text-muted opacity-70 ${
-                    pinToBottom ? "mt-auto border-t border-line pt-4" : ""
+                    pinToBottom ? "mt-auto border-t border-line/85 pt-4" : ""
                   }`}
                 >
                   {content}
@@ -112,10 +112,10 @@ export function SidebarNav({ canAccessAdmin, isOpen, onClose }: SidebarNavProps)
               <Link
                 key={href}
                 aria-current={isActive ? "page" : undefined}
-                className={`relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                className={`relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted hover:bg-canvas hover:text-ink"
+                    ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-button"
+                    : "text-muted hover:bg-primary/5 hover:text-ink"
                 }`}
                 href={href}
                 onClick={onClose}

@@ -11,10 +11,10 @@ type WorkspacePanelProps = {
 
 export function WorkspacePanel({ id, title, description, action, children }: WorkspacePanelProps) {
   return (
-    <Card className="border border-line bg-panel shadow-panel" radius="lg">
-      <CardHeader className="flex min-h-[72px] items-center justify-between gap-4 px-5 py-4 md:px-6">
+    <Card className="border border-line/85 bg-panel shadow-panel transition-shadow duration-200 data-[hover=true]:shadow-lift" radius="lg">
+      <CardHeader className="flex min-h-[68px] items-center justify-between gap-4 px-5 py-4 md:px-6">
         <div className="min-w-0">
-          <h2 id={id} className="text-base font-semibold leading-6 text-ink">
+          <h2 id={id} className="text-base font-bold leading-6 text-ink">
             {title}
           </h2>
           {description ? <p className="mt-0.5 text-xs leading-5 text-muted">{description}</p> : null}

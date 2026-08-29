@@ -27,7 +27,7 @@ export function TopBar({ onOpenMenu }: TopBarProps) {
         : t("nav.overview");
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-line bg-panel px-4 md:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-line/85 bg-panel/95 px-4 backdrop-blur md:px-6 lg:px-8">
       <span className="lg:hidden">
         <IconButton icon={Menu} label={t("header.openMenu")} onPress={onOpenMenu} />
       </span>
@@ -35,12 +35,12 @@ export function TopBar({ onOpenMenu }: TopBarProps) {
         className="hidden md:flex"
         classNames={{
           list: "gap-2",
-          separator: "px-0 text-muted",
+          separator: "px-0 text-muted/70",
         }}
         separator="/"
       >
-        <BreadcrumbItem className="text-sm text-muted">{t("header.breadcrumbWorkspace")}</BreadcrumbItem>
-        <BreadcrumbItem className="text-sm font-medium text-ink">{pageTitle}</BreadcrumbItem>
+        <BreadcrumbItem className="text-sm font-medium text-muted">{t("header.breadcrumbWorkspace")}</BreadcrumbItem>
+        <BreadcrumbItem className="text-sm font-bold text-ink">{pageTitle}</BreadcrumbItem>
       </Breadcrumbs>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <LocaleSwitcher />

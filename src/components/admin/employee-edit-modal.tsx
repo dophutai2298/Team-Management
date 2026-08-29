@@ -86,22 +86,22 @@ export function EmployeeEditModal({
   return (
     <AppModal
       isOpen
-      classNames={{ base: "max-h-[92dvh] rounded-lg border border-line bg-panel" }}
+      classNames={{ base: "max-h-[92dvh] rounded-xl border border-line/85 bg-panel shadow-lift" }}
       size="3xl"
       onOpenChange={(isOpen) => !isOpen && !isSubmitting && onClose()}
     >
       <ModalContent>
         <form onSubmit={form.handleSubmit((values) => onSubmit(toInput(values)))}>
-          <ModalHeader className="flex items-start gap-3 border-b border-line px-5 py-4 pr-16">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/12 text-primary">
+          <ModalHeader className="flex items-start gap-3 border-b border-line/85 px-5 py-4 pr-16">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-primary/15 bg-primary/10 text-primary">
               <BriefcaseBusiness aria-hidden size={18} />
             </span>
             <span className="min-w-0">
-              <span className="block text-base font-semibold leading-6 text-ink">{t("employees.editEmployee")}</span>
+              <span className="block text-base font-bold leading-6 text-ink">{t("employees.editEmployee")}</span>
               <span className="block truncate text-xs font-normal leading-5 text-muted">{employee.email}</span>
             </span>
           </ModalHeader>
-          <ModalBody className="max-h-[calc(92dvh-9rem)] overflow-y-auto px-5 py-5">
+          <ModalBody className="max-h-[calc(92dvh-9rem)] overflow-y-auto bg-slate-50/70 px-5 py-5 dark:bg-white/[0.03]">
             <div className="grid gap-4 md:grid-cols-2">
               <ControlledTextField isRequired control={form.control} label={t("admin.officialCode")} name="employeeCode" />
               <ControlledSelectField
@@ -148,8 +148,8 @@ export function EmployeeEditModal({
             </div>
             {error ? <FormError>{error}</FormError> : null}
           </ModalBody>
-          <ModalFooter className="border-t border-line px-5 py-4">
-            <ActionButton color="default" isDisabled={isSubmitting} variant="flat" onPress={onClose}>
+          <ModalFooter className="border-t border-line/85 bg-panel px-5 py-4">
+            <ActionButton isDisabled={isSubmitting} variant="light" onPress={onClose}>
               {t("admin.cancel")}
             </ActionButton>
             <ActionButton

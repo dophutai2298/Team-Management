@@ -24,7 +24,7 @@ export function ThemeToggle() {
       <Button
         isIconOnly
         aria-label={label}
-        className="h-9 w-9 min-w-9 border border-line bg-canvas text-ink shadow-sm"
+        className="h-9 w-9 min-w-9 border border-line bg-panel text-ink shadow-sm transition-all duration-200 data-[hover=true]:-translate-y-0.5 data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5 data-[pressed=true]:scale-[0.98]"
         isDisabled={!mounted}
         radius="lg"
         variant="flat"
