@@ -41,6 +41,9 @@ export function UserMenu() {
       </DropdownTrigger>
       <DropdownMenu aria-label={t("header.profile")} variant="flat">
         <DropdownSection showDivider title={t("header.userName")}>
+          <DropdownItem key="profile" href="/profile">
+            {t("profile.title")}
+          </DropdownItem>
           <DropdownItem key="account" href="/account-status">
             {t("header.accountStatus")}
           </DropdownItem>
