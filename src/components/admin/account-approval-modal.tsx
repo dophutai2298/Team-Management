@@ -105,16 +105,18 @@ export function AccountApprovalModal({
             }),
           )}
         >
-          <ModalHeader className="flex items-start gap-3 border-b border-line px-5 py-5 sm:px-6">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+          <ModalHeader className="flex items-start gap-3 border-b border-line/85 px-5 py-5 sm:px-6">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-primary/15 bg-primary/10 text-primary">
               <ShieldCheck aria-hidden size={20} />
             </span>
             <span className="min-w-0 pr-8">
-              <span className="block text-lg font-semibold leading-6 text-ink">{t("admin.approveTitle")}</span>
-              <span className="mt-1 block truncate text-sm font-normal text-muted">{account.fullName} · {account.email}</span>
+              <span className="block text-lg font-bold leading-6 text-ink">{t("admin.approveTitle")}</span>
+              <span className="mt-1 block truncate text-sm font-normal text-muted">
+                {account.fullName} - {account.email}
+              </span>
             </span>
           </ModalHeader>
-          <ModalBody className="gap-5 bg-canvas/45 px-5 py-6 sm:px-6">
+          <ModalBody className="gap-5 bg-slate-50/70 px-5 py-6 dark:bg-white/[0.03] sm:px-6">
             {isOptionsLoading ? <ModalSkeleton /> : null}
             {isOptionsError && optionsError ? <FormError>{optionsError}</FormError> : null}
             {!isOptionsLoading && !isOptionsError ? (
@@ -161,7 +163,7 @@ export function AccountApprovalModal({
             {isSubmitted && !isValid ? <FormError>{t("admin.errorReviewApproval")}</FormError> : null}
             {error ? <FormError>{error}</FormError> : null}
           </ModalBody>
-          <ModalFooter className="border-t border-line bg-panel px-5 py-4 sm:px-6">
+          <ModalFooter className="border-t border-line/85 bg-panel px-5 py-4 sm:px-6">
             <ActionButton isDisabled={isSubmitting} variant="light" onPress={onClose}>
               {t("admin.cancel")}
             </ActionButton>

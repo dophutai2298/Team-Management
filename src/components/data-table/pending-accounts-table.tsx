@@ -34,14 +34,13 @@ const DAY = 24 * 60 * 60 * 1000;
 const paginationControlClassNames = {
   base: "m-0 overflow-visible p-0",
   wrapper: "gap-1",
-  chevronNext: "rotate-180",
   item:
-    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-xs text-ink shadow-none data-[active=true]:text-primary-foreground data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
-  cursor: "h-8 min-h-8 w-8 min-w-8 rounded-lg bg-primary text-primary-foreground shadow-none",
+    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-xs font-semibold text-ink shadow-none data-[active=true]:text-white data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
+  cursor: "h-8 min-h-8 w-8 min-w-8 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-button",
   prev:
-    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
+    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
   next:
-    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
+    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
 } as const;
 
 type PendingAccountsTableProps = {
@@ -153,13 +152,13 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
 
   return (
     <div>
-      <div className="grid gap-3 border-b border-line bg-canvas/60 px-5 py-4 md:grid-cols-[minmax(240px,1fr)_190px_auto] md:px-6">
+      <div className="grid gap-3 border-b border-line bg-slate-50/80 px-5 py-4 dark:bg-white/[0.03] md:grid-cols-[minmax(240px,1fr)_190px_auto] md:px-6">
         <Input
           aria-label={t("admin.search")}
           classNames={{
             inputWrapper:
-              "h-10 rounded-lg border border-line bg-canvas shadow-none outline-none data-[hover=true]:border-primary/45 group-data-[focus=true]:border-primary group-data-[focus=true]:shadow-[0_0_0_3px_rgb(15_92_69_/_0.12)] group-data-[focus-visible=true]:outline-none",
-            input: "text-sm text-ink placeholder:text-muted",
+              "h-10 rounded-lg border border-line bg-panel shadow-none outline-none data-[hover=true]:border-primary/45 group-data-[focus=true]:border-primary group-data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] group-data-[focus-visible=true]:outline-none dark:group-data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
+            input: "text-sm font-medium text-ink placeholder:text-muted",
           }}
           placeholder={t("admin.searchPlaceholder")}
           radius="lg"
@@ -173,7 +172,7 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
           classNames={{
             ...selectFieldClassNames,
             trigger:
-              "h-10 min-h-10 rounded-lg border border-line bg-canvas px-3 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(15_92_69_/_0.12)] data-[focus-visible=true]:outline-none",
+              "h-10 min-h-10 rounded-lg border border-line bg-panel px-3 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] data-[focus-visible=true]:outline-none dark:data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
           }}
           placeholder={t("admin.allDates")}
           popoverProps={{ classNames: selectPopoverClassNames }}
@@ -209,7 +208,7 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
         <table className="w-full min-w-[820px] border-collapse" aria-label={t("admin.pendingTitle")}>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-line bg-panel">
+              <tr key={headerGroup.id} className="border-b border-line bg-slate-50/90 dark:bg-white/[0.04]">
                 {headerGroup.headers.map((header) => {
                   const sorted = header.column.getIsSorted();
                   const sortable = header.column.getCanSort();
@@ -247,7 +246,7 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b border-line transition-colors last:border-b-0 hover:bg-canvas/70">
+              <tr key={row.id} className="border-b border-line transition-colors last:border-b-0 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/20">
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-3 py-4 align-middle first:pl-5 last:pr-5 md:first:pl-6 md:last:pr-6">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -266,17 +265,17 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
         </table>
       </div>
 
-      <div className="flex flex-row justify-between items-center gap-3 border-t border-line px-5 py-4">
+      <div className="flex flex-col gap-3 border-t border-line bg-slate-50/60 px-5 py-4 dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted">
           {filteredCount} {t("admin.results")}
         </p>
-        <div className="flex flex-row justify items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
           <Select
             aria-label={t("admin.rowsPerPage")}
             classNames={{
-              ...selectFieldClassNames,
-              trigger:
-                "h-9 min-h-9 w-[76px] rounded-lg border border-line !bg-canvas px-2 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(15_92_69_/_0.12)] data-[focus-visible=true]:outline-none",
+            ...selectFieldClassNames,
+            trigger:
+                "h-9 min-h-9 w-[76px] rounded-lg border border-line !bg-panel px-2 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] data-[focus-visible=true]:outline-none dark:data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
             }}
             popoverProps={{ classNames: selectPopoverClassNames }}
             selectedKeys={[String(table.getState().pagination.pageSize)]}

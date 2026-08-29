@@ -148,7 +148,7 @@ export function VerifyEmailForm() {
 
   return (
     <AuthShell description={t("auth.verifyDescription")} title={t("auth.verifyTitle")}>
-      <p className="mb-6 rounded-lg border border-primary/10 bg-primary/5 px-3.5 py-3 text-sm leading-6 text-muted font-500">{t("auth.checkEmail")}</p>
+      <p className="mb-6 rounded-lg border border-primary/10 bg-primary/5 px-3.5 py-3 text-sm font-medium leading-6 text-muted">{t("auth.checkEmail")}</p>
       <form className="space-y-5" noValidate onSubmit={handleSubmit((values) => verify.mutate(values))}>
         <ControlledTextField isRequired autoComplete="email" control={control} label={t("auth.email")} name="email" type="email" />
         <ControlledTextField

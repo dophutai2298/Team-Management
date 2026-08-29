@@ -17,7 +17,9 @@ const config: Config = {
         line: "hsl(var(--line))",
       },
       boxShadow: {
-        panel: "0 12px 36px hsl(var(--shadow) / 0.08)",
+        panel: "0 4px 20px -2px hsl(var(--shadow) / 0.1)",
+        lift: "0 10px 25px -5px hsl(var(--shadow) / 0.15), 0 8px 10px -6px hsl(var(--shadow) / 0.1)",
+        button: "0 4px 14px 0 hsl(var(--shadow) / 0.3)",
       },
     },
   },
@@ -27,19 +29,27 @@ const config: Config = {
         light: {
           colors: {
             primary: {
-              DEFAULT: "#0F5C45",
+              DEFAULT: "#4F46E5",
               foreground: "#ffffff",
             },
-            focus: "#0F5C45",
+            secondary: {
+              DEFAULT: "#7C3AED",
+              foreground: "#ffffff",
+            },
+            focus: "#4F46E5",
           },
         },
         dark: {
           colors: {
             primary: {
-              DEFAULT: "#77D6AD",
-              foreground: "#101513",
+              DEFAULT: "#818CF8",
+              foreground: "#0B1020",
             },
-            focus: "#77D6AD",
+            secondary: {
+              DEFAULT: "#A78BFA",
+              foreground: "#0B1020",
+            },
+            focus: "#818CF8",
           },
         },
       },

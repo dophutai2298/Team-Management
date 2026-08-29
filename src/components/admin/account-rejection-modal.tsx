@@ -38,16 +38,18 @@ export function AccountRejectionModal({ account, error, isSubmitting, onClose, o
     <AppModal isOpen size="lg" onOpenChange={(isOpen) => !isOpen && !isSubmitting && onClose()}>
       <ModalContent>
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader className="flex items-start gap-3 border-b border-line px-5 py-5 sm:px-6">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-danger/10 text-danger">
+          <ModalHeader className="flex items-start gap-3 border-b border-line/85 px-5 py-5 sm:px-6">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-danger/20 bg-danger/10 text-danger">
               <UserRoundX aria-hidden size={20} />
             </span>
             <span className="min-w-0 pr-8">
-              <span className="block text-lg font-semibold leading-6 text-ink">{t("admin.rejectTitle")}</span>
-              <span className="mt-1 block truncate text-sm font-normal text-muted">{account.fullName} · {account.email}</span>
+              <span className="block text-lg font-bold leading-6 text-ink">{t("admin.rejectTitle")}</span>
+              <span className="mt-1 block truncate text-sm font-normal text-muted">
+                {account.fullName} - {account.email}
+              </span>
             </span>
           </ModalHeader>
-          <ModalBody className="gap-5 bg-canvas/45 px-5 py-6 sm:px-6">
+          <ModalBody className="gap-5 bg-slate-50/70 px-5 py-6 dark:bg-white/[0.03] sm:px-6">
             <ControlledTextareaField
               isRequired
               control={control}
@@ -58,11 +60,11 @@ export function AccountRejectionModal({ account, error, isSubmitting, onClose, o
             />
             {error ? <FormError>{error}</FormError> : null}
           </ModalBody>
-          <ModalFooter className="border-t border-line bg-panel px-5 py-4 sm:px-6">
-            <ActionButton color="secondary" isDisabled={isSubmitting}  onPress={onClose}>
+          <ModalFooter className="border-t border-line/85 bg-panel px-5 py-4 sm:px-6">
+            <ActionButton isDisabled={isSubmitting} variant="light" onPress={onClose}>
               {t("admin.cancel")}
             </ActionButton>
-            <ActionButton   color="primary" isLoading={isSubmitting} type="submit">
+            <ActionButton color="primary" isLoading={isSubmitting} type="submit">
               {t("admin.reject")}
             </ActionButton>
           </ModalFooter>

@@ -26,25 +26,35 @@ export function UserMenu() {
     <Dropdown
       classNames={{
         base: "z-[70]",
-        content: "rounded-lg border border-line bg-panel text-ink shadow-panel",
+        content: "min-w-[180px] rounded-lg border border-line/85 !bg-white p-1.5 text-ink shadow-lift backdrop-blur-none dark:!bg-slate-900",
       }}
       placement="bottom-end"
     >
       <DropdownTrigger>
         <button
           aria-label={t("header.profile")}
-          className="relative z-20 rounded-full border border-line bg-canvas p-0.5 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="relative z-20 rounded-full border border-line bg-panel p-0.5 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
           type="button"
         >
-          <Avatar className="h-9 w-9 bg-primary text-xs text-primary-foreground" name="TA" />
+          <Avatar className="h-9 w-9 bg-gradient-to-br from-indigo-600 to-violet-600 text-xs font-bold text-white" name="TA" />
         </button>
       </DropdownTrigger>
-      <DropdownMenu aria-label={t("header.profile")} variant="flat">
+      <DropdownMenu aria-label={t("header.profile")} classNames={{ base: "!bg-white text-ink dark:!bg-slate-900" }} variant="flat">
         <DropdownSection showDivider title={t("header.userName")}>
-          <DropdownItem key="profile" href="/profile">
+          <DropdownItem
+            key="profile"
+            className="min-h-8 text-ink data-[hover=true]:bg-primary/5"
+            classNames={{ title: "text-sm font-semibold text-ink" }}
+            href="/profile"
+          >
             {t("profile.title")}
           </DropdownItem>
-          <DropdownItem key="account" href="/account-status">
+          <DropdownItem
+            key="account"
+            className="min-h-8 text-ink data-[hover=true]:bg-primary/5"
+            classNames={{ title: "text-sm font-semibold text-ink" }}
+            href="/account-status"
+          >
             {t("header.accountStatus")}
           </DropdownItem>
         </DropdownSection>
