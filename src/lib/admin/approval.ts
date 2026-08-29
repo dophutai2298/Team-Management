@@ -21,10 +21,10 @@ export type ApprovalOptions = {
 export type ApprovalInput = {
   employeeCode: string;
   teamId: string;
-  managerEmployeeId: string | null;
+  managerEmployeeId: string;
   roleId: string;
-  positionTitle: string;
-  levelName: string;
+  positionTitle: string | null;
+  levelName: string | null;
 };
 
 export type RejectionInput = {
@@ -59,7 +59,7 @@ export function validateApprovalInput(
 
   const employeeCode = cleanText(input?.employeeCode).toUpperCase();
   const teamId = readRequiredUuid(input?.teamId);
-  const managerEmployeeId = cleanText(input?.managerEmployeeId);
+  const managerEmployeeId = readRequiredUuid(input?.managerEmployeeId);
   const roleId = readRequiredUuid(input?.roleId);
   const positionTitle = cleanText(input?.positionTitle);
   const levelName = cleanText(input?.levelName);
@@ -68,10 +68,10 @@ export function validateApprovalInput(
     employeeCode.length < 2 ||
     employeeCode.length > 64 ||
     !teamId ||
+    !managerEmployeeId ||
     !roleId ||
-    !positionTitle ||
-    !levelName ||
-    (managerEmployeeId && !readRequiredUuid(managerEmployeeId))
+    positionTitle.length > 120 ||
+    levelName.length > 120
   ) {
     return {
       ok: false,
@@ -84,10 +84,10 @@ export function validateApprovalInput(
     value: {
       employeeCode,
       teamId,
-      managerEmployeeId: managerEmployeeId || null,
+      managerEmployeeId,
       roleId,
-      positionTitle,
-      levelName,
+      positionTitle: positionTitle || null,
+      levelName: levelName || null,
     },
   };
 }
