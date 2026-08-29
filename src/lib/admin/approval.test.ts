@@ -31,14 +31,44 @@ describe("admin approval input", () => {
     });
   });
 
-  it("rejects approval when required organization data is missing", () => {
+  it("accepts approval without a position or level", () => {
     expect(
       validateApprovalInput(employeeId, {
         employeeCode: "DEV-024",
-        teamId: "not-a-uuid",
+        teamId,
+        managerEmployeeId: managerId,
         roleId,
-        positionTitle: "",
-        levelName: "",
+        positionTitle: null,
+        levelName: null,
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        employeeCode: "DEV-024",
+        teamId,
+        managerEmployeeId: managerId,
+        roleId,
+        positionTitle: null,
+        levelName: null,
+      },
+    });
+  });
+
+  it.each([
+    ["employee code", { employeeCode: "" }],
+    ["team", { teamId: "" }],
+    ["manager", { managerEmployeeId: "" }],
+    ["role", { roleId: "" }],
+  ])("rejects approval when the required %s is missing", (_, override) => {
+    expect(
+      validateApprovalInput(employeeId, {
+        employeeCode: "DEV-024",
+        teamId,
+        managerEmployeeId: managerId,
+        roleId,
+        positionTitle: "Software Engineer",
+        levelName: "L2",
+        ...override,
       }),
     ).toEqual({
       ok: false,

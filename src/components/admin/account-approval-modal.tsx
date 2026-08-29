@@ -62,15 +62,19 @@ export function AccountApprovalModal({
     () =>
       z.object({
         employeeCode: z.string().trim().min(2, t("admin.errorInvalidApproval")).max(64, t("admin.errorInvalidApproval")),
-        levelName: z.string().trim().min(1, t("validation.required")),
-        managerEmployeeId: z.string(),
-        positionTitle: z.string().trim().min(1, t("validation.required")),
+        levelName: z.string().trim().max(120, t("admin.errorProfileFieldLength")),
+        managerEmployeeId: z.string().min(1, t("validation.required")),
+        positionTitle: z.string().trim().max(120, t("admin.errorProfileFieldLength")),
         roleId: z.string().min(1, t("validation.required")),
         teamId: z.string().min(1, t("validation.required")),
       }),
     [t],
   );
-  const { control, handleSubmit } = useForm<ApprovalValues>({
+  const {
+    control,
+    formState: { isSubmitted, isValid },
+    handleSubmit,
+  } = useForm<ApprovalValues>({
     defaultValues: {
       employeeCode: account.employeeCodeClaim,
       levelName: "",
@@ -81,7 +85,7 @@ export function AccountApprovalModal({
     },
     resolver: zodResolver(schema),
   });
-  const hasOrganizationOptions = Boolean(options?.teams.length && options.roles.length);
+  const hasRequiredOptions = Boolean(options?.teams.length && options.roles.length && options.managers.length);
 
   return (
     <AppModal
@@ -94,7 +98,11 @@ export function AccountApprovalModal({
         <form
           noValidate
           onSubmit={handleSubmit((values) =>
-            onSubmit({ ...values, managerEmployeeId: values.managerEmployeeId || null }),
+            onSubmit({
+              ...values,
+              levelName: values.levelName || null,
+              positionTitle: values.positionTitle || null,
+            }),
           )}
         >
           <ModalHeader className="flex items-start gap-3 border-b border-line px-5 py-5 sm:px-6">
@@ -111,7 +119,7 @@ export function AccountApprovalModal({
             {isOptionsError && optionsError ? <FormError>{optionsError}</FormError> : null}
             {!isOptionsLoading && !isOptionsError ? (
               <>
-                {!hasOrganizationOptions ? (
+                {!hasRequiredOptions ? (
                   <div className="rounded-lg border border-warning/30 bg-warning-50 px-3.5 py-3 text-sm leading-6 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300">
                     {t("admin.missingOptions")}
                   </div>
@@ -137,18 +145,20 @@ export function AccountApprovalModal({
                     placeholder={t("admin.selectRole")}
                   />
                   <ControlledSelectField
+                    isRequired
                     ariaLabel={t("admin.manager")}
                     control={control}
                     label={t("admin.manager")}
                     name="managerEmployeeId"
                     options={options?.managers ?? []}
-                    placeholder={t("admin.noManager")}
+                    placeholder={t("admin.selectManager")}
                   />
-                  <ControlledTextField isRequired control={control} label={t("admin.position")} name="positionTitle" />
-                  <ControlledTextField isRequired control={control} label={t("admin.level")} name="levelName" />
+                  <ControlledTextField control={control} label={t("admin.position")} name="positionTitle" />
+                  <ControlledTextField control={control} label={t("admin.level")} name="levelName" />
                 </div>
               </>
             ) : null}
+            {isSubmitted && !isValid ? <FormError>{t("admin.errorReviewApproval")}</FormError> : null}
             {error ? <FormError>{error}</FormError> : null}
           </ModalBody>
           <ModalFooter className="border-t border-line bg-panel px-5 py-4 sm:px-6">
@@ -157,7 +167,7 @@ export function AccountApprovalModal({
             </ActionButton>
             <ActionButton
               color="primary"
-              isDisabled={!hasOrganizationOptions || isOptionsLoading}
+              isDisabled={!hasRequiredOptions || isOptionsLoading}
               isLoading={isSubmitting}
               type="submit"
             >

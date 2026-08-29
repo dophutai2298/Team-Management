@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getInsForgeAdminClient } from "@/lib/insforge/admin";
+import { createPermissionKey, type Permission, type PermissionKey } from "@/lib/authorization/catalog";
 
 import type { AccountStatus, RegistrationClaim } from "./access";
 
@@ -13,7 +14,24 @@ export type EmployeeAccount = {
   employeeCode: string | null;
   accountStatus: AccountStatus;
   locale: "vi" | "en";
-  isAdmin: boolean;
+  primaryRoleId: string | null;
+  role: EmployeeRole | null;
+  permissions: PermissionKey[];
+  memberships: EmployeeMembership[];
+  reportsToEmployeeId: string | null;
+  descendantEmployeeIds: string[];
+};
+
+export type EmployeeRole = {
+  id: string;
+  slug: string;
+  name: string;
+  isActive: boolean;
+};
+
+export type EmployeeMembership = {
+  teamId: string;
+  isPrimary: boolean;
 };
 
 type EmployeeRow = {
@@ -25,7 +43,34 @@ type EmployeeRow = {
   employee_code: string | null;
   account_status: AccountStatus;
   locale: "vi" | "en";
-  is_admin: boolean;
+  primary_role_id: string | null;
+  reports_to_employee_id: string | null;
+};
+
+type RoleRow = {
+  id: string;
+  slug: string;
+  name: string;
+  is_active: boolean;
+};
+
+type RolePermissionRow = {
+  permission_id: string;
+};
+
+type PermissionRow = {
+  resource: Permission["resource"];
+  action: Permission["action"];
+  scope: Permission["scope"];
+};
+
+type MembershipRow = {
+  team_id: string;
+  is_primary: boolean;
+};
+
+type DescendantRow = {
+  employee_id: string;
 };
 
 type RegistrationClaimRow = {
@@ -44,7 +89,12 @@ function toEmployeeAccount(row: EmployeeRow): EmployeeAccount {
     employeeCode: row.employee_code,
     accountStatus: row.account_status,
     locale: row.locale,
-    isAdmin: row.is_admin,
+    primaryRoleId: row.primary_role_id,
+    role: null,
+    permissions: [],
+    memberships: [],
+    reportsToEmployeeId: row.reports_to_employee_id,
+    descendantEmployeeIds: [],
   };
 }
 
@@ -113,7 +163,7 @@ export async function createPendingEmployee(
       { onConflict: "auth_user_id" },
     )
     .select(
-      "id, auth_user_id, email, full_name, employee_code_claim, employee_code, account_status, locale, is_admin",
+      "id, auth_user_id, email, full_name, employee_code_claim, employee_code, account_status, locale, primary_role_id, reports_to_employee_id",
     )
     .single();
 
@@ -136,10 +186,11 @@ export async function deleteRegistrationClaim(email: string): Promise<void> {
 }
 
 export async function getEmployeeAccount(authUserId: string): Promise<EmployeeAccount | null> {
-  const { data, error } = await getInsForgeAdminClient().database
+  const client = getInsForgeAdminClient();
+  const { data, error } = await client.database
     .from("employees")
     .select(
-      "id, auth_user_id, email, full_name, employee_code_claim, employee_code, account_status, locale, is_admin",
+      "id, auth_user_id, email, full_name, employee_code_claim, employee_code, account_status, locale, primary_role_id, reports_to_employee_id",
     )
     .eq("auth_user_id", authUserId)
     .maybeSingle();
@@ -148,5 +199,67 @@ export async function getEmployeeAccount(authUserId: string): Promise<EmployeeAc
     throw error;
   }
 
-  return data ? toEmployeeAccount(data as EmployeeRow) : null;
+  if (!data) {
+    return null;
+  }
+
+  const employee = toEmployeeAccount(data as EmployeeRow);
+  const [roleResult, rolePermissionsResult, membershipsResult, descendantsResult] = await Promise.all([
+    employee.primaryRoleId
+      ? client.database
+          .from("roles")
+          .select("id, slug, name, is_active")
+          .eq("id", employee.primaryRoleId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    employee.primaryRoleId
+      ? client.database
+          .from("role_permissions")
+          .select("permission_id")
+          .eq("role_id", employee.primaryRoleId)
+          .limit(200)
+      : Promise.resolve({ data: [], error: null }),
+    client.database
+      .from("team_memberships")
+      .select("team_id, is_primary")
+      .eq("employee_id", employee.id)
+      .eq("is_active", true)
+      .limit(100),
+    client.database.rpc("get_employee_descendant_ids", { p_employee_id: employee.id }),
+  ]);
+
+  if (roleResult.error) throw roleResult.error;
+  if (rolePermissionsResult.error) throw rolePermissionsResult.error;
+  if (membershipsResult.error) throw membershipsResult.error;
+  if (descendantsResult.error) throw descendantsResult.error;
+
+  const role = roleResult.data as RoleRow | null;
+  const permissionIds = role?.is_active
+    ? ((rolePermissionsResult.data ?? []) as RolePermissionRow[]).map(({ permission_id }) => permission_id)
+    : [];
+  const permissionsResult = permissionIds.length
+    ? await client.database
+        .from("permissions")
+        .select("resource, action, scope")
+        .in("id", permissionIds)
+        .eq("is_active", true)
+        .limit(200)
+    : { data: [], error: null };
+
+  if (permissionsResult.error) throw permissionsResult.error;
+
+  return {
+    ...employee,
+    role: role
+      ? { id: role.id, slug: role.slug, name: role.name, isActive: role.is_active }
+      : null,
+    permissions: ((permissionsResult.data ?? []) as PermissionRow[]).map(createPermissionKey),
+    memberships: ((membershipsResult.data ?? []) as MembershipRow[]).map((membership) => ({
+      teamId: membership.team_id,
+      isPrimary: membership.is_primary,
+    })),
+    descendantEmployeeIds: ((descendantsResult.data ?? []) as DescendantRow[]).map(
+      ({ employee_id }) => employee_id,
+    ),
+  };
 }

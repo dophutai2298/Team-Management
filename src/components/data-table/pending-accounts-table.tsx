@@ -34,6 +34,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const paginationControlClassNames = {
   base: "m-0 overflow-visible p-0",
   wrapper: "gap-1",
+  chevronNext: "rotate-180",
   item:
     "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-canvas text-xs text-ink shadow-none data-[active=true]:text-primary-foreground data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
   cursor: "h-8 min-h-8 w-8 min-w-8 rounded-lg bg-primary text-primary-foreground shadow-none",
@@ -265,11 +266,11 @@ export function PendingAccountsTable({ accounts, onApprove, onReject }: PendingA
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
+      <div className="flex flex-row justify-between items-center gap-3 border-t border-line px-5 py-4">
         <p className="text-xs text-muted">
           {filteredCount} {t("admin.results")}
         </p>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-row justify items-center gap-3">
           <Select
             aria-label={t("admin.rowsPerPage")}
             classNames={{
