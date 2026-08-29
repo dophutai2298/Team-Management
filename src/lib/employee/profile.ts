@@ -24,6 +24,8 @@ export type EmployeeProfile = {
 export type EmployeeSummary = EmployeeProfile & {
   roleId: string | null;
   teamId: string | null;
+  teamIds: string[];
+  teamNames: string[];
   managerEmployeeId: string | null;
   updatedAt: string;
   createdAt: string;
@@ -49,6 +51,7 @@ export type EmployeeProfileInput = {
 export type AdminEmployeeInput = {
   employeeCode: string;
   teamId: string;
+  teamIds: string[];
   managerEmployeeId: string | null;
   roleId: string;
   positionTitle: string | null;
@@ -87,6 +90,14 @@ function readUuid(value: unknown): string | null {
 function readNullableUuid(value: unknown): string | null {
   const candidate = cleanText(value);
   return candidate ? readUuid(candidate) : null;
+}
+
+function readUuidList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return [...new Set(value.map(readUuid).filter((id): id is string => Boolean(id)))];
 }
 
 function readDate(value: unknown): string | null {
@@ -148,6 +159,7 @@ export function validateAdminEmployeeInput(
 
   const employeeCode = cleanText(input?.employeeCode).toUpperCase();
   const teamId = readUuid(input?.teamId);
+  const teamIds = readUuidList(input?.teamIds);
   const managerEmployeeId = readNullableUuid(input?.managerEmployeeId);
   const roleId = readUuid(input?.roleId);
   const positionTitle = nullableText(input?.positionTitle);
@@ -158,6 +170,7 @@ export function validateAdminEmployeeInput(
     employeeCode.length < 2 ||
     employeeCode.length > 64 ||
     !teamId ||
+    (teamIds.length > 0 && !teamIds.includes(teamId)) ||
     !roleId ||
     (positionTitle?.length ?? 0) > 120 ||
     (levelName?.length ?? 0) > 120 ||
@@ -171,6 +184,7 @@ export function validateAdminEmployeeInput(
     value: {
       employeeCode,
       teamId,
+      teamIds: teamIds.length > 0 ? teamIds : [teamId],
       managerEmployeeId,
       roleId,
       positionTitle,
