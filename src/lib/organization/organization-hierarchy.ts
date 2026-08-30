@@ -21,6 +21,7 @@ export type OrganizationChartNode = {
   hasParent: boolean;
   isHighlight: boolean;
   children: OrganizationChartNode[];
+  _children?: OrganizationChartNode[] | null;
 };
 
 const TRANSPARENT_AVATAR =
@@ -200,5 +201,25 @@ export function buildTeamOrganizationChart(
     hasParent: false,
     isHighlight: true,
     children: roots,
+  };
+}
+
+export function prepareOrganizationChartForRender(
+  node: OrganizationChartNode,
+): OrganizationChartNode {
+  const children = Array.isArray(node.children)
+    ? node.children
+    : Array.isArray(node._children)
+      ? node._children
+      : [];
+  const normalizedChildren = children.map(prepareOrganizationChartForRender);
+
+  return {
+    id: node.id,
+    person: { ...node.person },
+    hasChild: node.hasChild || normalizedChildren.length > 0,
+    hasParent: node.hasParent,
+    isHighlight: node.isHighlight,
+    children: normalizedChildren,
   };
 }

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { OrganizationEmployee, OrganizationTeam } from "./organization";
-import { buildReportingTableRows, buildTeamOrganizationChart } from "./organization-hierarchy";
+import {
+  buildReportingTableRows,
+  buildTeamOrganizationChart,
+  prepareOrganizationChartForRender,
+} from "./organization-hierarchy";
 
 function employee(
   id: string,
@@ -128,5 +132,39 @@ describe("organization hierarchy adapters", () => {
         (node) => node.id,
       ),
     ).toEqual(["cycle-a", "cycle-b"]);
+  });
+
+  it("restores a renderer-mutated chart root to a children array before rendering", () => {
+    const engineeringTeam: OrganizationTeam = {
+      id: "engineering",
+      name: "Engineering",
+      code: "ENG",
+      parentTeamId: null,
+      description: null,
+      memberCount: 2,
+    };
+    const chart = buildTeamOrganizationChart(
+      [
+        employee("manager", "Chi Nguyen", null),
+        employee("report", "Anh Pham", "manager"),
+      ],
+      [engineeringTeam],
+      engineeringTeam.id,
+    );
+
+    expect(chart).not.toBeNull();
+
+    const mutatedChart = chart as NonNullable<typeof chart>;
+    const rendererMutableChart = mutatedChart as unknown as {
+      _children?: NonNullable<typeof chart>["children"];
+      children?: unknown;
+    };
+    rendererMutableChart._children = mutatedChart.children;
+    rendererMutableChart.children = undefined;
+
+    const renderTree = prepareOrganizationChartForRender(mutatedChart);
+
+    expect(renderTree.children).toHaveLength(1);
+    expect(renderTree.children[0]?.children).toEqual([]);
   });
 });
