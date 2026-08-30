@@ -45,6 +45,7 @@ type TeamRow = {
 type MembershipRow = {
   employee_id: string;
   team_id: string;
+  is_primary: boolean;
 };
 
 type ManagerRow = {
@@ -102,6 +103,7 @@ type EmployeeLookups = {
   teamNames: Map<string, string>;
   managerNames: Map<string, string>;
   employeePrimaryTeamIds: Map<string, string>;
+  employeeTeamIds: Map<string, string[]>;
 };
 
 async function getEmployeeLookups(): Promise<EmployeeLookups> {
@@ -112,10 +114,9 @@ async function getEmployeeLookups(): Promise<EmployeeLookups> {
     client.database.from("employees").select("id, full_name, employee_code").eq("account_status", "active").limit(500),
     client.database
       .from("team_memberships")
-      .select("employee_id, team_id")
-      .eq("is_primary", true)
+      .select("employee_id, team_id, is_primary")
       .eq("is_active", true)
-      .limit(1000),
+      .limit(3000),
   ]);
 
   if (roles.error) throw roles.error;
@@ -128,8 +129,14 @@ async function getEmployeeLookups(): Promise<EmployeeLookups> {
     teamNames: new Map(((teams.data ?? []) as TeamRow[]).map((team) => [team.id, team.name])),
     managerNames: new Map(((managers.data ?? []) as ManagerRow[]).map((manager) => [manager.id, manager.full_name])),
     employeePrimaryTeamIds: new Map(
-      ((memberships.data ?? []) as MembershipRow[]).map((membership) => [membership.employee_id, membership.team_id]),
+      ((memberships.data ?? []) as MembershipRow[])
+        .filter((membership) => membership.is_primary)
+        .map((membership) => [membership.employee_id, membership.team_id]),
     ),
+    employeeTeamIds: ((memberships.data ?? []) as MembershipRow[]).reduce((index, membership) => {
+      index.set(membership.employee_id, [...(index.get(membership.employee_id) ?? []), membership.team_id]);
+      return index;
+    }, new Map<string, string[]>()),
   };
 }
 
@@ -193,6 +200,10 @@ export async function listManagedEmployees(): Promise<EmployeeSummary[]> {
       ...profile,
       roleId: row.primary_role_id,
       teamId: lookups.employeePrimaryTeamIds.get(row.id) ?? null,
+      teamIds: lookups.employeeTeamIds.get(row.id) ?? [],
+      teamNames: (lookups.employeeTeamIds.get(row.id) ?? [])
+        .map((teamId) => lookups.teamNames.get(teamId))
+        .filter((teamName): teamName is string => Boolean(teamName)),
       managerEmployeeId: row.reports_to_employee_id,
       updatedAt: row.updated_at,
       createdAt: row.created_at,
@@ -235,6 +246,7 @@ export async function updateManagedEmployee(
     p_employee_id: employeeId,
     p_employee_code: input.employeeCode,
     p_team_id: input.teamId,
+    p_team_ids: input.teamIds,
     p_manager_employee_id: input.managerEmployeeId,
     p_role_id: input.roleId,
     p_position_title: input.positionTitle,

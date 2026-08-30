@@ -49,6 +49,7 @@ describe("admin employee input", () => {
       validateAdminEmployeeInput(employeeId, {
         employeeCode: " dev-024 ",
         teamId,
+        teamIds: [teamId, teamId],
         managerEmployeeId: managerId,
         roleId,
         positionTitle: "",
@@ -60,6 +61,7 @@ describe("admin employee input", () => {
       value: {
         employeeCode: "DEV-024",
         teamId,
+        teamIds: [teamId],
         managerEmployeeId: managerId,
         roleId,
         positionTitle: null,
@@ -74,6 +76,7 @@ describe("admin employee input", () => {
       validateAdminEmployeeInput(employeeId, {
         employeeCode: "DEV-024",
         teamId,
+        teamIds: [teamId],
         managerEmployeeId: "",
         roleId,
         positionTitle: "",

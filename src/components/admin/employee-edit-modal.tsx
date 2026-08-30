@@ -11,21 +11,27 @@ import type { AdminEmployeeInput, EmployeeManagementOptions, EmployeeSummary } f
 import { useLocale } from "@/lib/i18n/locale-provider";
 
 import { AppModal } from "../heroui/app-modal";
-import { ControlledSelectField, ControlledTextField } from "../heroui/controlled-fields";
+import { ControlledMultiSelectField, ControlledSelectField, ControlledTextField } from "../heroui/controlled-fields";
 import { FormError } from "../heroui/form-error";
 import { ActionButton } from "../heroui/action-button";
 
 const NONE_MANAGER = "none";
 
-const employeeSchema = z.object({
-  employeeCode: z.string().trim().min(2, "Enter an employee code.").max(64, "Keep this under 64 characters."),
-  teamId: z.string().uuid("Select a team."),
-  managerEmployeeId: z.string(),
-  roleId: z.string().uuid("Select a role."),
-  positionTitle: z.string().trim().max(120, "Keep this under 120 characters.").optional(),
-  levelName: z.string().trim().max(120, "Keep this under 120 characters.").optional(),
-  accountStatus: z.enum(["active", "disabled", "terminated"]),
-});
+const employeeSchema = z
+  .object({
+    employeeCode: z.string().trim().min(2, "Enter an employee code.").max(64, "Keep this under 64 characters."),
+    teamId: z.string().uuid("Select a team."),
+    teamIds: z.array(z.string().uuid()).min(1, "Select at least one active membership."),
+    managerEmployeeId: z.string(),
+    roleId: z.string().uuid("Select a role."),
+    positionTitle: z.string().trim().max(120, "Keep this under 120 characters.").optional(),
+    levelName: z.string().trim().max(120, "Keep this under 120 characters.").optional(),
+    accountStatus: z.enum(["active", "disabled", "terminated"]),
+  })
+  .refine((values) => values.teamIds.includes(values.teamId), {
+    message: "Active memberships must include the primary team.",
+    path: ["teamIds"],
+  });
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
 
@@ -42,6 +48,7 @@ function toFormValues(employee: EmployeeSummary): EmployeeFormValues {
   return {
     employeeCode: employee.employeeCode ?? "",
     teamId: employee.teamId ?? "",
+    teamIds: employee.teamIds.length > 0 ? employee.teamIds : employee.teamId ? [employee.teamId] : [],
     managerEmployeeId: employee.managerEmployeeId ?? NONE_MANAGER,
     roleId: employee.roleId ?? "",
     positionTitle: employee.positionTitle ?? "",
@@ -54,6 +61,7 @@ function toInput(values: EmployeeFormValues): AdminEmployeeInput {
   return {
     employeeCode: values.employeeCode,
     teamId: values.teamId,
+    teamIds: values.teamIds,
     managerEmployeeId: values.managerEmployeeId === NONE_MANAGER ? null : values.managerEmployeeId,
     roleId: values.roleId,
     positionTitle: values.positionTitle || null,
@@ -112,6 +120,15 @@ export function EmployeeEditModal({
                 name="teamId"
                 options={options.teams}
                 placeholder={t("admin.selectTeam")}
+              />
+              <ControlledMultiSelectField
+                isRequired
+                ariaLabel={t("employees.memberships")}
+                control={form.control}
+                label={t("employees.memberships")}
+                name="teamIds"
+                options={options.teams}
+                placeholder={t("employees.selectMemberships")}
               />
               <ControlledSelectField
                 isRequired

@@ -1,6 +1,7 @@
 "use client";
 
 import { Select, SelectItem, Textarea, type InputProps } from "@heroui/react";
+import type { Key, ReactNode } from "react";
 import { Controller, type Control, type FieldPath, type FieldValues } from "react-hook-form";
 
 import { selectFieldClassNames, selectPopoverClassNames, textareaFieldClassNames } from "./field-styles";
@@ -19,6 +20,8 @@ export function ControlledTextField<TValues extends FieldValues>({
   control,
   name,
   transform,
+  isRequired,
+  label,
   ...props
 }: ControlledTextFieldProps<TValues>) {
   return (
@@ -30,6 +33,8 @@ export function ControlledTextField<TValues extends FieldValues>({
           {...props}
           errorMessage={fieldState.error?.message}
           isInvalid={Boolean(fieldState.error)}
+          isRequired={isRequired}
+          label={label ? <RequiredLabel isRequired={isRequired}>{label}</RequiredLabel> : label}
           name={field.name}
           value={typeof field.value === "string" ? field.value : ""}
           onBlur={field.onBlur}
@@ -50,11 +55,24 @@ type ControlledSelectFieldProps<TValues extends FieldValues> = {
   ariaLabel: string;
   control: Control<TValues>;
   isRequired?: boolean;
-  label: string;
+  label: ReactNode;
   name: FieldPath<TValues>;
   options: SelectOption[];
   placeholder: string;
 };
+
+function RequiredLabel({ children, isRequired }: { children: ReactNode; isRequired?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span>{children}</span>
+      {isRequired ? (
+        <span aria-hidden="true" className="text-danger">
+          *
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 export function ControlledSelectField<TValues extends FieldValues>({
   ariaLabel,
@@ -79,7 +97,7 @@ export function ControlledSelectField<TValues extends FieldValues>({
             errorMessage={fieldState.error?.message}
             isInvalid={Boolean(fieldState.error)}
             isRequired={isRequired}
-            label={label}
+            label={<RequiredLabel isRequired={isRequired}>{label}</RequiredLabel>}
             labelPlacement="outside"
             placeholder={placeholder}
             popoverProps={{ classNames: selectPopoverClassNames }}
@@ -88,6 +106,68 @@ export function ControlledSelectField<TValues extends FieldValues>({
             variant="bordered"
             onBlur={field.onBlur}
             onChange={(event) => field.onChange(event.target.value)}
+          >
+            {options.map((option) => (
+              <SelectItem key={option.id} textValue={option.name}>
+                {option.name}
+                {option.detail ? ` (${option.detail})` : ""}
+              </SelectItem>
+            ))}
+          </Select>
+        );
+      }}
+    />
+  );
+}
+
+type ControlledMultiSelectFieldProps<TValues extends FieldValues> = {
+  ariaLabel: string;
+  control: Control<TValues>;
+  isRequired?: boolean;
+  label: ReactNode;
+  name: FieldPath<TValues>;
+  options: SelectOption[];
+  placeholder: string;
+};
+
+export function ControlledMultiSelectField<TValues extends FieldValues>({
+  ariaLabel,
+  control,
+  isRequired,
+  label,
+  name,
+  options,
+  placeholder,
+}: ControlledMultiSelectFieldProps<TValues>) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => {
+        const value = Array.isArray(field.value)
+          ? (field.value as unknown[]).filter((item): item is string => typeof item === "string")
+          : [];
+
+        return (
+          <Select
+            aria-label={ariaLabel}
+            classNames={selectFieldClassNames}
+            errorMessage={fieldState.error?.message}
+            isInvalid={Boolean(fieldState.error)}
+            isRequired={isRequired}
+            label={<RequiredLabel isRequired={isRequired}>{label}</RequiredLabel>}
+            labelPlacement="outside"
+            placeholder={placeholder}
+            popoverProps={{ classNames: selectPopoverClassNames }}
+            radius="lg"
+            selectedKeys={new Set(value)}
+            selectionMode="multiple"
+            variant="bordered"
+            onBlur={field.onBlur}
+            onSelectionChange={(keys) => {
+              const selectedKeys = keys === "all" ? options.map((option) => option.id) : Array.from(keys as Set<Key>, String);
+              field.onChange(selectedKeys);
+            }}
           >
             {options.map((option) => (
               <SelectItem key={option.id} textValue={option.name}>

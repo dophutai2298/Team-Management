@@ -57,6 +57,36 @@ a {
   background: rgb(8 127 91 / 0.2);
 }
 
+.organization-chart-canvas > div,
+.organization-chart-canvas > div > div {
+  height: 100%;
+}
+
+.organization-chart-canvas svg {
+  display: block;
+  min-height: 100%;
+  touch-action: none;
+  width: 100%;
+}
+
+.dark .organization-chart-canvas rect.box {
+  fill: hsl(var(--panel)) !important;
+  stroke: hsl(var(--line)) !important;
+}
+
+.dark .organization-chart-canvas .org-chart-person-name {
+  fill: hsl(var(--ink)) !important;
+}
+
+.dark .organization-chart-canvas .org-chart-person-title,
+.dark .organization-chart-canvas .org-chart-person-reports {
+  fill: hsl(var(--muted)) !important;
+}
+
+.dark .organization-chart-canvas path.link {
+  stroke: hsl(var(--line)) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

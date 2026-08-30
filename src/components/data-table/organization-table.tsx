@@ -4,22 +4,33 @@ import { Chip, Input, Pagination, Select, SelectItem } from "@heroui/react";
 import {
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type ExpandedState,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, Edit3, FilterX, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight, FilterX, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import type { EmployeeSummary } from "@/lib/employee/profile";
+import { selectFieldClassNames, selectPopoverClassNames } from "@/components/heroui/field-styles";
+import { ActionButton } from "@/components/heroui/action-button";
 import { useLocale } from "@/lib/i18n/locale-provider";
+import {
+  buildReportingTableRows,
+  type OrganizationReportingRow,
+} from "@/lib/organization/organization-hierarchy";
+import type { OrganizationEmployee, OrganizationTeam } from "@/lib/organization/organization";
 
-import { ActionButton } from "../heroui/action-button";
-import { selectFieldClassNames, selectPopoverClassNames } from "../heroui/field-styles";
+type OrganizationTableProps = {
+  employees: OrganizationEmployee[];
+  teams: OrganizationTeam[];
+  onOpenTeamChart: (teamId: string) => void;
+};
 
 const paginationControlClassNames = {
   base: "m-0 overflow-visible p-0",
@@ -33,36 +44,56 @@ const paginationControlClassNames = {
     "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
 } as const;
 
-type EmployeesTableProps = {
-  employees: EmployeeSummary[];
-  onEdit: (employee: EmployeeSummary) => void;
-};
-
-function statusColor(status: EmployeeSummary["accountStatus"]) {
-  if (status === "active") return "success";
-  if (status === "disabled") return "warning";
-  return "danger";
-}
-
-export function EmployeesTable({ employees, onEdit }: EmployeesTableProps) {
-  const { locale, t } = useLocale();
+export function OrganizationTable({ employees, teams, onOpenTeamChart }: OrganizationTableProps) {
+  const { t } = useLocale();
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const [sorting, setSorting] = useState<SortingState>([{ id: "fullName", desc: false }]);
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-US", { dateStyle: "medium" }),
-    [locale],
+  const reportingRows = useMemo(() => buildReportingTableRows(employees), [employees]);
+  const teamFilterOptions = useMemo(
+    () => [{ id: "all", name: t("organization.allTeams") }, ...teams.map((team) => ({ id: team.id, name: team.name }))],
+    [teams, t],
   );
-  const columns = useMemo<ColumnDef<EmployeeSummary>[]>(
+  const columns = useMemo<ColumnDef<OrganizationReportingRow>[]>(
     () => [
       {
-        accessorFn: (employee) => `${employee.fullName} ${employee.email} ${employee.employeeCode ?? ""}`,
+        accessorFn: (employee) =>
+          `${employee.fullName} ${employee.email} ${employee.employeeCode ?? ""} ${employee.positionTitle ?? ""}`,
         id: "fullName",
-        header: t("employees.employee"),
+        header: t("organization.person"),
         cell: ({ row }) => (
-          <div className="min-w-[220px]">
-            <p className="text-sm font-semibold text-ink">{row.original.fullName}</p>
-            <p className="mt-0.5 text-xs text-muted">{row.original.email}</p>
+          <div
+            className="flex min-w-[260px] items-center gap-2"
+            style={{ paddingLeft: `${row.depth * 1.25}rem` }}
+          >
+            {row.getCanExpand() ? (
+              <ActionButton
+                aria-label={
+                  row.getIsExpanded()
+                    ? t("organization.collapseReports")
+                    : t("organization.expandReports")
+                }
+                className="h-7 min-h-7 w-7 min-w-7 shrink-0 border border-line bg-panel p-0 text-muted"
+                isIconOnly
+                radius="md"
+                size="sm"
+                variant="bordered"
+                onPress={() => row.toggleExpanded()}
+              >
+                {row.getIsExpanded() ? (
+                  <ChevronDown aria-hidden size={14} />
+                ) : (
+                  <ChevronRight aria-hidden size={14} />
+                )}
+              </ActionButton>
+            ) : (
+              <span className="block h-7 w-7 shrink-0" aria-hidden />
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-ink">{row.original.fullName}</p>
+              <p className="mt-0.5 truncate text-xs text-muted">{row.original.email}</p>
+            </div>
           </div>
         ),
       },
@@ -76,11 +107,23 @@ export function EmployeesTable({ employees, onEdit }: EmployeesTableProps) {
         ),
       },
       {
-        accessorKey: "teamName",
+        accessorKey: "primaryTeamName",
         header: t("admin.team"),
+        filterFn: (row, _columnId, value) => row.original.teamIds.includes(String(value)),
         cell: ({ row }) => (
-          <div className="min-w-[160px]">
-            <p className="truncate text-sm font-medium text-ink">{row.original.teamName ?? "-"}</p>
+          <div className="min-w-[180px]">
+            {row.original.primaryTeamId && row.original.primaryTeamName ? (
+              <ActionButton
+                className="h-auto min-w-0 justify-start px-0 py-0 text-sm font-semibold text-primary"
+                size="sm"
+                variant="light"
+                onPress={() => onOpenTeamChart(row.original.primaryTeamId as string)}
+              >
+                <span className="max-w-[170px] truncate">{row.original.primaryTeamName}</span>
+              </ActionButton>
+            ) : (
+              <p className="truncate text-sm font-medium text-ink">-</p>
+            )}
             {row.original.teamNames.length > 1 ? (
               <p className="mt-0.5 truncate text-xs text-muted">
                 {row.original.teamNames.length} {t("organization.memberships")}
@@ -100,82 +143,51 @@ export function EmployeesTable({ employees, onEdit }: EmployeesTableProps) {
         cell: ({ getValue }) => <span className="whitespace-nowrap text-sm text-muted">{String(getValue() ?? "-")}</span>,
       },
       {
-        accessorKey: "accountStatus",
-        header: t("employees.status"),
-        filterFn: (row, columnId, value) => String(row.getValue(columnId)) === String(value),
-        cell: ({ getValue }) => {
-          const status = getValue<EmployeeSummary["accountStatus"]>();
-          return (
-            <Chip className="h-6 px-2 text-xs capitalize" color={statusColor(status)} radius="sm" size="sm" variant="flat">
-              {status}
-            </Chip>
-          );
-        },
-      },
-      {
-        accessorKey: "updatedAt",
-        header: t("employees.updated"),
-        cell: ({ getValue }) => (
-          <span className="whitespace-nowrap text-sm text-muted">
-            {dateFormatter.format(new Date(String(getValue())))}
-          </span>
-        ),
-      },
-      {
-        id: "actions",
-        enableGlobalFilter: false,
-        enableSorting: false,
-        header: t("admin.actions"),
-        cell: ({ row }) => (
-          <div className="flex min-w-[92px] justify-end">
-            <ActionButton
-              className="h-8 px-3 text-xs"
-              color="primary"
-              size="sm"
-              startContent={<Edit3 aria-hidden size={14} />}
-              variant="flat"
-              onPress={() => onEdit(row.original)}
-            >
-              {t("employees.edit")}
-            </ActionButton>
-          </div>
-        ),
+        accessorKey: "directReportsCount",
+        header: t("organization.directReports"),
+        cell: ({ getValue }) => <span className="text-sm font-semibold text-ink">{String(getValue())}</span>,
       },
     ],
-    [dateFormatter, onEdit, t],
+    [onOpenTeamChart, t],
   );
-
   // TanStack Table exposes mutable helpers by design; React Compiler skips this hook.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     columns,
-    data: employees,
+    data: reportingRows,
+    autoResetExpanded: false,
+    filterFromLeafRows: true,
     getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) => row.id,
+    getSubRows: (row) => row.subRows,
     globalFilterFn: "includesString",
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
     onColumnFiltersChange: setColumnFilters,
+    onExpandedChange: setExpanded,
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
-    state: { columnFilters, globalFilter, sorting },
+    paginateExpandedRows: false,
+    state: { columnFilters, expanded, globalFilter, sorting },
   });
-  const statusFilter = table.getColumn("accountStatus")?.getFilterValue();
-  const filteredCount = table.getFilteredRowModel().rows.length;
-  const hasFilters = Boolean(globalFilter || statusFilter);
+  const teamFilter = table.getColumn("primaryTeamName")?.getFilterValue();
+  const filteredCount = table.getFilteredRowModel().flatRows.length;
+  const hasFilters = Boolean(globalFilter || teamFilter);
 
   return (
     <div>
-      <div className="grid gap-3 border-b border-line bg-slate-50/80 px-5 py-4 dark:bg-white/[0.03] md:grid-cols-[minmax(240px,1fr)_180px_auto] md:px-6">
+      <div className="grid gap-3 border-b border-line bg-slate-50/80 px-5 py-4 dark:bg-white/[0.03] md:grid-cols-[minmax(260px,1fr)_220px_auto] md:px-6">
         <Input
-          aria-label={t("employees.search")}
+          aria-label={t("organization.search")}
           classNames={{
             inputWrapper:
               "h-10 rounded-lg border border-line bg-panel shadow-none outline-none data-[hover=true]:border-primary/45 group-data-[focus=true]:border-primary group-data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] group-data-[focus-visible=true]:outline-none dark:group-data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
             input: "text-sm font-medium text-ink placeholder:text-muted",
           }}
-          placeholder={t("employees.searchPlaceholder")}
+          placeholder={t("organization.searchPlaceholder")}
           radius="lg"
           startContent={<Search aria-hidden className="text-muted" size={16} />}
           value={globalFilter}
@@ -183,27 +195,28 @@ export function EmployeesTable({ employees, onEdit }: EmployeesTableProps) {
           onValueChange={setGlobalFilter}
         />
         <Select
-          aria-label={t("employees.statusFilter")}
+          aria-label={t("organization.teamFilter")}
           classNames={{
             ...selectFieldClassNames,
             trigger:
-              "h-10 min-h-10 rounded-lg border border-line !bg-panel px-3 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] data-[focus-visible=true]:outline-none dark:data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
+              "relative h-10 min-h-10 rounded-lg border border-line !bg-panel px-3 pr-10 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] data-[focus-visible=true]:outline-none dark:data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
           }}
-          placeholder={t("employees.allStatuses")}
+          placeholder={t("organization.allTeams")}
           popoverProps={{ classNames: selectPopoverClassNames }}
           radius="lg"
-          selectedKeys={[statusFilter ? String(statusFilter) : "all"]}
+          selectedKeys={[teamFilter ? String(teamFilter) : "all"]}
           size="sm"
           variant="bordered"
           onChange={(event) => {
             const value = event.target.value;
-            table.getColumn("accountStatus")?.setFilterValue(value === "all" ? undefined : value);
+            table.getColumn("primaryTeamName")?.setFilterValue(value === "all" ? undefined : value);
           }}
         >
-          <SelectItem key="all">{t("employees.allStatuses")}</SelectItem>
-          <SelectItem key="active">{t("employees.active")}</SelectItem>
-          <SelectItem key="disabled">{t("employees.disabled")}</SelectItem>
-          <SelectItem key="terminated">{t("employees.terminated")}</SelectItem>
+          {teamFilterOptions.map((team) => (
+            <SelectItem key={team.id} textValue={team.name}>
+              {team.name}
+            </SelectItem>
+          ))}
         </Select>
         <ActionButton
           className="h-10 px-3 text-sm"
@@ -220,39 +233,32 @@ export function EmployeesTable({ employees, onEdit }: EmployeesTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1120px] border-collapse" aria-label={t("employees.tableTitle")}>
+        <table className="w-full min-w-[960px] border-collapse" aria-label={t("organization.tableTitle")}>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="border-b border-line bg-slate-50/90 dark:bg-white/[0.04]">
                 {headerGroup.headers.map((header) => {
                   const sorted = header.column.getIsSorted();
-                  const sortable = header.column.getCanSort();
 
                   return (
                     <th key={header.id} className="px-3 py-2.5 text-left first:pl-5 last:pr-5 md:first:pl-6 md:last:pr-6">
-                      {sortable ? (
-                        <ActionButton
-                          className="h-8 min-w-0 justify-start gap-1.5 px-1 text-xs text-muted"
-                          endContent={
-                            sorted === "asc" ? (
-                              <ArrowUp aria-hidden size={13} />
-                            ) : sorted === "desc" ? (
-                              <ArrowDown aria-hidden size={13} />
-                            ) : (
-                              <ArrowUpDown aria-hidden size={13} />
-                            )
-                          }
-                          size="sm"
-                          variant="light"
-                          onPress={() => header.column.toggleSorting(sorted === "asc")}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </ActionButton>
-                      ) : (
-                        <span className="block text-right text-xs font-semibold text-muted">
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </span>
-                      )}
+                      <ActionButton
+                        className="h-8 min-w-0 justify-start gap-1.5 px-1 text-xs text-muted"
+                        endContent={
+                          sorted === "asc" ? (
+                            <ArrowUp aria-hidden size={13} />
+                          ) : sorted === "desc" ? (
+                            <ArrowDown aria-hidden size={13} />
+                          ) : (
+                            <ArrowUpDown aria-hidden size={13} />
+                          )
+                        }
+                        size="sm"
+                        variant="light"
+                        onPress={() => header.column.toggleSorting(sorted === "asc")}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </ActionButton>
                     </th>
                   );
                 })}
@@ -272,7 +278,7 @@ export function EmployeesTable({ employees, onEdit }: EmployeesTableProps) {
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td className="px-6 py-12 text-center text-sm text-muted" colSpan={columns.length}>
-                  {t("employees.noResults")}
+                  {t("organization.noResults")}
                 </td>
               </tr>
             ) : null}
@@ -288,9 +294,9 @@ export function EmployeesTable({ employees, onEdit }: EmployeesTableProps) {
           <Select
             aria-label={t("admin.rowsPerPage")}
             classNames={{
-            ...selectFieldClassNames,
-            trigger:
-                "h-9 min-h-9 w-[76px] rounded-lg border border-line !bg-panel px-2 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] data-[focus-visible=true]:outline-none dark:data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
+              ...selectFieldClassNames,
+              trigger:
+                "relative h-9 min-h-9 w-[76px] rounded-lg border border-line !bg-panel px-2 pr-8 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] data-[focus-visible=true]:outline-none dark:data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
             }}
             popoverProps={{ classNames: selectPopoverClassNames }}
             selectedKeys={[String(table.getState().pagination.pageSize)]}
