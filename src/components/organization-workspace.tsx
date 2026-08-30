@@ -1,8 +1,9 @@
 "use client";
 
-import { Chip, Skeleton } from "@heroui/react";
+import { Chip, Skeleton, Tab, Tabs } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, Building2, RefreshCw, Users } from "lucide-react";
+import { AlertCircle, Network, RefreshCw, Table2, Users } from "lucide-react";
+import { useCallback, useState, type Key } from "react";
 
 import { OrganizationTable } from "@/components/data-table/organization-table";
 import { ActionButton } from "@/components/heroui/action-button";
@@ -41,6 +42,9 @@ function OrganizationSkeleton() {
 
 export function OrganizationWorkspace() {
   const { t } = useLocale();
+  const [activeView, setActiveView] = useState<"table" | "chart">("table");
+  const [hasOpenedChart, setHasOpenedChart] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState("");
   const organizationQuery = useQuery({
     queryKey: ["organization"],
     queryFn: () => fetchApi<OrganizationView>("/api/organization"),
@@ -50,6 +54,25 @@ export function OrganizationWorkspace() {
   const teamCount = organization?.teams.length ?? 0;
   const managerCount =
     organization?.employees.filter((employee) => employee.directReportsCount > 0).length ?? 0;
+  const organizationTeamIds = new Set(organization?.teams.map((team) => team.id) ?? []);
+  const defaultTeamId =
+    organization?.teams.find(
+      (team) => !team.parentTeamId || !organizationTeamIds.has(team.parentTeamId),
+    )?.id ?? organization?.teams[0]?.id ?? "";
+  const currentTeamId = organization?.teams.some((team) => team.id === selectedTeamId)
+    ? selectedTeamId
+    : defaultTeamId;
+  const openTeamChart = useCallback((teamId: string) => {
+    setSelectedTeamId(teamId);
+    setHasOpenedChart(true);
+    setActiveView("chart");
+  }, []);
+  const changeView = (key: Key) => {
+    const nextView = key === "chart" ? "chart" : "table";
+
+    setActiveView(nextView);
+    if (nextView === "chart") setHasOpenedChart(true);
+  };
 
   return (
     <div className="mx-auto w-full max-w-[1320px]">
@@ -124,29 +147,72 @@ export function OrganizationWorkspace() {
             />
           </section>
 
-          <section className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+          <section className="mt-7">
             <WorkspacePanel
-              description={t("organization.chartDescription")}
-              id="organization-chart-title"
-              title={t("organization.chartTitle")}
+              action={
+                <Tabs
+                  aria-label={t("organization.viewLabel")}
+                  classNames={{
+                    tabList: "gap-1 rounded-lg border border-line bg-slate-100 p-1 dark:bg-white/[0.05]",
+                    cursor: "rounded-md bg-panel shadow-sm",
+                    tab: "h-8 px-3 text-xs font-semibold",
+                    tabContent: "text-muted group-data-[selected=true]:text-ink",
+                  }}
+                  selectedKey={activeView}
+                  size="sm"
+                  onSelectionChange={changeView}
+                >
+                  <Tab
+                    key="table"
+                    title={
+                      <span className="flex items-center gap-1.5">
+                        <Table2 aria-hidden size={14} />
+                        {t("organization.tableView")}
+                      </span>
+                    }
+                  />
+                  <Tab
+                    key="chart"
+                    title={
+                      <span className="flex items-center gap-1.5">
+                        <Network aria-hidden size={14} />
+                        {t("organization.chartView")}
+                      </span>
+                    }
+                  />
+                </Tabs>
+              }
+              description={
+                activeView === "table"
+                  ? t("organization.tableDescription")
+                  : t("organization.chartDescription")
+              }
+              id="organization-view-title"
+              title={
+                activeView === "table"
+                  ? t("organization.tableTitle")
+                  : t("organization.chartTitle")
+              }
             >
               {organization.employees.length > 0 ? (
                 <div className="-mx-5 -mb-5 md:-mx-6 md:-mb-6">
-                  <OrganizationChart employees={organization.employees} />
-                </div>
-              ) : (
-                <EmptyPanel description={t("organization.emptyDescription")} icon={Building2} title={t("organization.emptyTitle")} />
-              )}
-            </WorkspacePanel>
-
-            <WorkspacePanel
-              description={t("organization.tableDescription")}
-              id="organization-table-title"
-              title={t("organization.tableTitle")}
-            >
-              {organization.employees.length > 0 ? (
-                <div className="-mx-5 -mb-5 md:-mx-6 md:-mb-6">
-                  <OrganizationTable employees={organization.employees} teams={organization.teams} />
+                  <div hidden={activeView !== "table"}>
+                    <OrganizationTable
+                      employees={organization.employees}
+                      teams={organization.teams}
+                      onOpenTeamChart={openTeamChart}
+                    />
+                  </div>
+                  {hasOpenedChart ? (
+                    <div hidden={activeView !== "chart"}>
+                      <OrganizationChart
+                        employees={organization.employees}
+                        selectedTeamId={currentTeamId}
+                        teams={organization.teams}
+                        onSelectedTeamChange={setSelectedTeamId}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <EmptyPanel description={t("organization.emptyDescription")} icon={Users} title={t("organization.emptyTitle")} />

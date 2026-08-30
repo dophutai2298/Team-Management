@@ -4,25 +4,32 @@ import { Chip, Input, Pagination, Select, SelectItem } from "@heroui/react";
 import {
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type ExpandedState,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, FilterX, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight, FilterX, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { selectFieldClassNames, selectPopoverClassNames } from "@/components/heroui/field-styles";
 import { ActionButton } from "@/components/heroui/action-button";
 import { useLocale } from "@/lib/i18n/locale-provider";
+import {
+  buildReportingTableRows,
+  type OrganizationReportingRow,
+} from "@/lib/organization/organization-hierarchy";
 import type { OrganizationEmployee, OrganizationTeam } from "@/lib/organization/organization";
 
 type OrganizationTableProps = {
   employees: OrganizationEmployee[];
   teams: OrganizationTeam[];
+  onOpenTeamChart: (teamId: string) => void;
 };
 
 const paginationControlClassNames = {
@@ -37,16 +44,18 @@ const paginationControlClassNames = {
     "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
 } as const;
 
-export function OrganizationTable({ employees, teams }: OrganizationTableProps) {
+export function OrganizationTable({ employees, teams, onOpenTeamChart }: OrganizationTableProps) {
   const { t } = useLocale();
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const [sorting, setSorting] = useState<SortingState>([{ id: "fullName", desc: false }]);
+  const reportingRows = useMemo(() => buildReportingTableRows(employees), [employees]);
   const teamFilterOptions = useMemo(
     () => [{ id: "all", name: t("organization.allTeams") }, ...teams.map((team) => ({ id: team.id, name: team.name }))],
     [teams, t],
   );
-  const columns = useMemo<ColumnDef<OrganizationEmployee>[]>(
+  const columns = useMemo<ColumnDef<OrganizationReportingRow>[]>(
     () => [
       {
         accessorFn: (employee) =>
@@ -54,9 +63,37 @@ export function OrganizationTable({ employees, teams }: OrganizationTableProps) 
         id: "fullName",
         header: t("organization.person"),
         cell: ({ row }) => (
-          <div className="min-w-[240px]">
-            <p className="text-sm font-semibold text-ink">{row.original.fullName}</p>
-            <p className="mt-0.5 text-xs text-muted">{row.original.email}</p>
+          <div
+            className="flex min-w-[260px] items-center gap-2"
+            style={{ paddingLeft: `${row.depth * 1.25}rem` }}
+          >
+            {row.getCanExpand() ? (
+              <ActionButton
+                aria-label={
+                  row.getIsExpanded()
+                    ? t("organization.collapseReports")
+                    : t("organization.expandReports")
+                }
+                className="h-7 min-h-7 w-7 min-w-7 shrink-0 border border-line bg-panel p-0 text-muted"
+                isIconOnly
+                radius="md"
+                size="sm"
+                variant="bordered"
+                onPress={() => row.toggleExpanded()}
+              >
+                {row.getIsExpanded() ? (
+                  <ChevronDown aria-hidden size={14} />
+                ) : (
+                  <ChevronRight aria-hidden size={14} />
+                )}
+              </ActionButton>
+            ) : (
+              <span className="block h-7 w-7 shrink-0" aria-hidden />
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-ink">{row.original.fullName}</p>
+              <p className="mt-0.5 truncate text-xs text-muted">{row.original.email}</p>
+            </div>
           </div>
         ),
       },
@@ -75,7 +112,18 @@ export function OrganizationTable({ employees, teams }: OrganizationTableProps) 
         filterFn: (row, _columnId, value) => row.original.teamIds.includes(String(value)),
         cell: ({ row }) => (
           <div className="min-w-[180px]">
-            <p className="truncate text-sm font-medium text-ink">{row.original.primaryTeamName ?? "-"}</p>
+            {row.original.primaryTeamId && row.original.primaryTeamName ? (
+              <ActionButton
+                className="h-auto min-w-0 justify-start px-0 py-0 text-sm font-semibold text-primary"
+                size="sm"
+                variant="light"
+                onPress={() => onOpenTeamChart(row.original.primaryTeamId as string)}
+              >
+                <span className="max-w-[170px] truncate">{row.original.primaryTeamName}</span>
+              </ActionButton>
+            ) : (
+              <p className="truncate text-sm font-medium text-ink">-</p>
+            )}
             {row.original.teamNames.length > 1 ? (
               <p className="mt-0.5 truncate text-xs text-muted">
                 {row.original.teamNames.length} {t("organization.memberships")}
@@ -100,27 +148,33 @@ export function OrganizationTable({ employees, teams }: OrganizationTableProps) 
         cell: ({ getValue }) => <span className="text-sm font-semibold text-ink">{String(getValue())}</span>,
       },
     ],
-    [t],
+    [onOpenTeamChart, t],
   );
-
   // TanStack Table exposes mutable helpers by design; React Compiler skips this hook.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     columns,
-    data: employees,
+    data: reportingRows,
+    autoResetExpanded: false,
+    filterFromLeafRows: true,
     getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) => row.id,
+    getSubRows: (row) => row.subRows,
     globalFilterFn: "includesString",
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
     onColumnFiltersChange: setColumnFilters,
+    onExpandedChange: setExpanded,
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
-    state: { columnFilters, globalFilter, sorting },
+    paginateExpandedRows: false,
+    state: { columnFilters, expanded, globalFilter, sorting },
   });
   const teamFilter = table.getColumn("primaryTeamName")?.getFilterValue();
-  const filteredCount = table.getFilteredRowModel().rows.length;
+  const filteredCount = table.getFilteredRowModel().flatRows.length;
   const hasFilters = Boolean(globalFilter || teamFilter);
 
   return (
