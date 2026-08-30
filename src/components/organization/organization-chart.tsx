@@ -7,7 +7,10 @@ import { useMemo } from "react";
 
 import { selectFieldClassNames, selectPopoverClassNames } from "@/components/heroui/field-styles";
 import { useLocale } from "@/lib/i18n/locale-provider";
-import { buildTeamOrganizationChart } from "@/lib/organization/organization-hierarchy";
+import {
+  buildTeamOrganizationChart,
+  prepareOrganizationChartForRender,
+} from "@/lib/organization/organization-hierarchy";
 import type { OrganizationEmployee, OrganizationTeam } from "@/lib/organization/organization";
 
 const UnicefOrgChart = dynamic(
@@ -36,6 +39,7 @@ export function OrganizationChart({
     () => buildTeamOrganizationChart(employees, teams, selectedTeamId),
     [employees, selectedTeamId, teams],
   );
+  const renderChart = chart ? prepareOrganizationChartForRender(chart) : null;
   const controlPrefix = `organization-chart-${selectedTeamId}`;
 
   return (
@@ -63,7 +67,7 @@ export function OrganizationChart({
         </Select>
       </div>
 
-      {chart ? (
+      {renderChart ? (
         <div
           className="organization-chart-canvas h-[560px] min-w-0 overflow-hidden bg-panel"
           aria-label={t("organization.chartTitle")}
@@ -71,7 +75,7 @@ export function OrganizationChart({
         >
           <p className="sr-only">{t("organization.chartAccessibility")}</p>
           <UnicefOrgChart
-            key={chart.id}
+            key={renderChart.id}
             animationDuration={220}
             avatarWidth={0}
             backgroundColor="#ffffff"
@@ -88,7 +92,7 @@ export function OrganizationChart({
             reportsColor="#64748b"
             shouldResize={false}
             titleColor="#64748b"
-            tree={chart}
+            tree={renderChart}
           />
         </div>
       ) : (
