@@ -25,7 +25,7 @@ const navigation = [
   { key: "nav.overview", href: "/dashboard", icon: LayoutDashboard, available: true },
   { key: "nav.organization", href: "/organization", icon: Building2, available: true },
   { key: "nav.employees", href: "/employees", icon: Users, available: true, requiresAdmin: true },
-  { key: "nav.tasks", href: "/tasks", icon: CheckSquare2, available: false },
+  { key: "nav.tasks", href: "/tasks", icon: CheckSquare2, available: true },
   { key: "nav.calendar", href: "/calendar", icon: CalendarDays, available: false },
   { key: "nav.notifications", href: "/notifications", icon: Bell, available: false },
   { key: "nav.todo", href: "/todo", icon: ListTodo, available: false },
