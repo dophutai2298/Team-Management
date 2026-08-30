@@ -178,10 +178,6 @@ export function buildTeamOrganizationChart(
     return null;
   }
 
-  if (roots.length === 1) {
-    return roots[0] ?? null;
-  }
-
   roots.forEach((root) => {
     root.hasParent = true;
   });

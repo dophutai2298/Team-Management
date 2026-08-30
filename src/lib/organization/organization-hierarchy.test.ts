@@ -165,6 +165,34 @@ describe("organization hierarchy adapters", () => {
     const renderTree = prepareOrganizationChartForRender(mutatedChart);
 
     expect(renderTree.children).toHaveLength(1);
-    expect(renderTree.children[0]?.children).toEqual([]);
+    expect(renderTree.children[0]?.id).toBe("manager");
+    expect(renderTree.children[0]?.children).toHaveLength(1);
+    expect(renderTree.children[0]?.children[0]?.id).toBe("report");
+  });
+
+  it("uses the selected team as the chart root when the team has a single leaf member", () => {
+    const supportTeam: OrganizationTeam = {
+      id: "support",
+      name: "Support",
+      code: "SUP",
+      parentTeamId: null,
+      description: null,
+      memberCount: 1,
+    };
+    const chart = buildTeamOrganizationChart(
+      [employee("support-one", "Support One", null, {
+        primaryTeamId: "support",
+        primaryTeamName: "Support",
+        teamIds: ["support"],
+        teamNames: ["Support"],
+      })],
+      [supportTeam],
+      supportTeam.id,
+    );
+
+    expect(chart?.id).toBe("team-root:support");
+    expect(chart?.children).toHaveLength(1);
+    expect(chart?.children[0]?.id).toBe("support-one");
+    expect(prepareOrganizationChartForRender(chart as NonNullable<typeof chart>).children).toHaveLength(1);
   });
 });
