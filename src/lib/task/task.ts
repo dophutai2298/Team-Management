@@ -33,6 +33,16 @@ export type AssignmentProgressInput = {
   blockedReason: string | null;
 };
 
+export type TaskCommentInput = {
+  body: string;
+};
+
+export type TaskAttachmentUploadInput = {
+  contentType: string;
+  fileName: string;
+  fileSizeBytes: number;
+};
+
 export type TaskAccessTarget = {
   taskType: TaskType;
   creatorEmployeeId: string;
@@ -46,6 +56,33 @@ export type TaskAssigneeSummary = {
   status: TaskStatus;
   progress: number;
   blockedReason: string | null;
+};
+
+export type TaskComment = {
+  id: string;
+  authorEmployeeId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+};
+
+export type TaskAttachment = {
+  id: string;
+  uploaderEmployeeId: string;
+  uploaderName: string;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  createdAt: string;
+  canRemove: boolean;
+};
+
+export type TaskActivity = {
+  id: string;
+  actorEmployeeId: string | null;
+  actorName: string;
+  action: string;
+  createdAt: string;
 };
 
 export type TaskAssignmentEmployee = {
@@ -86,11 +123,57 @@ export type TaskDetail = TaskSummary & {
   description: string | null;
   assignees: TaskAssigneeSummary[];
   ownAssignee: TaskAssigneeSummary | null;
+  comments: TaskComment[];
+  attachments: TaskAttachment[];
+  activity: TaskActivity[];
   canManageAssignment: boolean;
   canUpdateOwnProgress: boolean;
 };
 
-export type TaskValidationCode = "INVALID_TASK_INPUT";
+export const TASK_ATTACHMENT_BUCKET = "task-attachments";
+export const TASK_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
+export const TASK_ATTACHMENT_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+export const TASK_ATTACHMENT_ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+  "application/pdf",
+  "text/plain",
+  "text/csv",
+  "text/markdown",
+  "application/json",
+  "application/zip",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+] as const;
+const TASK_ATTACHMENT_TYPES_BY_EXTENSION: Record<string, (typeof TASK_ATTACHMENT_ALLOWED_TYPES)[number]> = {
+  csv: "text/csv",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  gif: "image/gif",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  json: "application/json",
+  md: "text/markdown",
+  pdf: "application/pdf",
+  png: "image/png",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  svg: "image/svg+xml",
+  txt: "text/plain",
+  webp: "image/webp",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  zip: "application/zip",
+};
+
+export type TaskValidationCode = "INVALID_TASK_INPUT" | "INVALID_TASK_COMMENT" | "INVALID_TASK_ATTACHMENT";
 
 export class TaskAssignmentInputError extends Error {
   constructor(message = "The selected task assignees are no longer available.") {
@@ -235,6 +318,62 @@ export function validateAssignmentProgressInput(
   };
 }
 
+export function validateTaskCommentInput(input: Record<string, unknown> | null): ValidationResult<TaskCommentInput> {
+  const body = cleanText(input?.body);
+
+  if (body.length < 1 || body.length > 2_000) {
+    return { ok: false, code: "INVALID_TASK_COMMENT" };
+  }
+
+  return { ok: true, value: { body } };
+}
+
+function readFileExtension(fileName: string): string {
+  const extension = fileName.split(".").pop()?.toLowerCase() ?? "";
+
+  return extension === fileName.toLowerCase() ? "" : extension;
+}
+
+function resolveTaskAttachmentContentType(fileName: string, contentType: string): string | null {
+  const normalizedContentType = contentType.split(";")[0]?.trim().toLowerCase() ?? "";
+  if (TASK_ATTACHMENT_ALLOWED_TYPES.includes(normalizedContentType as (typeof TASK_ATTACHMENT_ALLOWED_TYPES)[number])) {
+    return normalizedContentType;
+  }
+
+  if (normalizedContentType && normalizedContentType !== "application/octet-stream" && normalizedContentType !== "binary/octet-stream") {
+    return null;
+  }
+
+  return TASK_ATTACHMENT_TYPES_BY_EXTENSION[readFileExtension(fileName)] ?? null;
+}
+
+export function validateTaskAttachmentUploadInput(input: TaskAttachmentUploadInput): ValidationResult<TaskAttachmentUploadInput> {
+  const fileName = cleanText(input.fileName);
+  const contentType = resolveTaskAttachmentContentType(fileName, cleanText(input.contentType));
+  const isImage = contentType?.startsWith("image/") ?? false;
+  const maxBytes = isImage ? TASK_ATTACHMENT_IMAGE_MAX_BYTES : TASK_ATTACHMENT_MAX_BYTES;
+
+  if (
+    fileName.length < 1 ||
+    fileName.length > 255 ||
+    !contentType ||
+    !Number.isInteger(input.fileSizeBytes) ||
+    input.fileSizeBytes <= 0 ||
+    input.fileSizeBytes > maxBytes
+  ) {
+    return { ok: false, code: "INVALID_TASK_ATTACHMENT" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      contentType,
+      fileName,
+      fileSizeBytes: input.fileSizeBytes,
+    },
+  };
+}
+
 export function isTaskId(value: unknown): value is string {
   return typeof value === "string" && UUID_PATTERN.test(value);
 }
@@ -261,14 +400,14 @@ function canAccessAssignedTask(actor: AuthorizationActor | null, target: TaskAcc
 }
 
 export function canReadTask(actor: AuthorizationActor | null, target: TaskAccessTarget): boolean {
-  if (hasSystemTaskPermission(actor, "read")) {
-    return true;
-  }
-
   if (target.taskType === "personal") {
     return Boolean(actor?.employeeId && actor.employeeId === target.creatorEmployeeId && isAuthorized(actor, "read", "task", {
       employeeId: target.creatorEmployeeId,
     }));
+  }
+
+  if (hasSystemTaskPermission(actor, "read")) {
+    return true;
   }
 
   return canAccessAssignedTask(actor, target);
@@ -302,6 +441,24 @@ export function canUpdateOwnAssignmentProgress(actor: AuthorizationActor | null,
   return Boolean(actor?.employeeId === employeeId && isAuthorized(actor, "update", "task", { employeeId }));
 }
 
+export function canRemoveTaskAttachment(
+  actor: AuthorizationActor | null,
+  target: TaskAccessTarget,
+  uploaderEmployeeId: string,
+): boolean {
+  if (!actor?.employeeId) {
+    return false;
+  }
+
+  if (actor.employeeId === uploaderEmployeeId) {
+    return true;
+  }
+
+  return target.taskType === "personal"
+    ? canManagePersonalTask(actor, "update", target)
+    : canManageAssignment(actor, target);
+}
+
 export function canManagePersonalTask(
   actor: AuthorizationActor | null,
   action: Extract<PermissionAction, "update" | "delete">,
@@ -309,10 +466,6 @@ export function canManagePersonalTask(
 ): boolean {
   if (target.taskType !== "personal") {
     return false;
-  }
-
-  if (hasSystemTaskPermission(actor, action)) {
-    return true;
   }
 
   return Boolean(

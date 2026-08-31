@@ -4,11 +4,11 @@
 
 **Blocked by:** 09: Scoped task assignment and multi-assignee progress.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Permitted users can comment on tasks they can access.
-- [ ] Assignees can report blockers with a blocked reason and blocked status.
-- [ ] Users can upload allowed task attachment types up to the configured file limit.
-- [ ] Attachment metadata is stored so files can be downloaded or removed safely.
-- [ ] Attachment download enforces task access permission.
-- [ ] Comments, blocker changes, and important attachment actions are represented in task activity or audit as appropriate.
+- [x] Permitted users can comment on tasks they can access.
+- [x] Assignees can report blockers with a blocked reason and blocked status.
+- [x] Users can upload allowed task attachment types up to the configured file limit.
+- [x] Attachment metadata is stored so files can be downloaded or removed safely.
+- [x] Attachment download enforces task access permission.
+- [x] Comments, blocker changes, and important attachment actions are represented in task activity or audit as appropriate.

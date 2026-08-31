@@ -325,6 +325,18 @@ const englishMessages = {
   "tasks.blockedReason": "Blocked reason",
   "tasks.blockedReasonPlaceholder": "What is preventing this work from moving forward?",
   "tasks.assignedTo": "Assigned to",
+  "tasks.comments": "Comments",
+  "tasks.newComment": "New comment",
+  "tasks.commentPlaceholder": "Add a concise update or handoff note.",
+  "tasks.postComment": "Post comment",
+  "tasks.noComments": "No comments yet.",
+  "tasks.attachments": "Attachments",
+  "tasks.upload": "Upload",
+  "tasks.download": "Download",
+  "tasks.remove": "Remove",
+  "tasks.noAttachments": "No attachments yet.",
+  "tasks.activity": "Activity",
+  "tasks.noActivity": "No activity yet.",
 } as const;
 
 export type MessageKey = keyof typeof englishMessages;
