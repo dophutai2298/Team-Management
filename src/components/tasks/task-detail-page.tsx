@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { ActionButton } from "@/components/heroui/action-button";
+import { showSuccessToast } from "@/components/heroui/app-toast";
 import { AppModal } from "@/components/heroui/app-modal";
 import { textareaFieldClassNames } from "@/components/heroui/field-styles";
 import { FormError } from "@/components/heroui/form-error";
@@ -142,6 +143,7 @@ export function TaskDetailPage({ actorCacheKey, taskId }: TaskDetailPageProps) {
       }),
     onSuccess: async (data) => {
       setCommentBody("");
+      showSuccessToast(t("tasks.toastCommentPosted"));
       await syncTask(data);
     },
   });
@@ -150,13 +152,17 @@ export function TaskDetailPage({ actorCacheKey, taskId }: TaskDetailPageProps) {
       fetchApi<TaskDetailPayload>(`/api/tasks/${targetTaskId}/attachments`, { method: "POST", body: formData }),
     onSuccess: async (data) => {
       setClientAttachmentError(null);
+      showSuccessToast(t("tasks.toastAttachmentUploaded"));
       await syncTask(data);
     },
   });
   const removeMutation = useMutation({
     mutationFn: ({ attachmentId, taskId: targetTaskId }: { attachmentId: string; taskId: string }) =>
       fetchApi<TaskDetailPayload>(`/api/tasks/${targetTaskId}/attachments/${attachmentId}`, { method: "DELETE" }),
-    onSuccess: syncTask,
+    onSuccess: async (data) => {
+      showSuccessToast(t("tasks.toastAttachmentRemoved"));
+      await syncTask(data);
+    },
   });
   const updateMutation = useMutation({
     mutationFn: ({ input, taskId: targetTaskId }: { input: TaskFormInput; taskId: string }) =>
@@ -167,6 +173,7 @@ export function TaskDetailPage({ actorCacheKey, taskId }: TaskDetailPageProps) {
       }),
     onSuccess: async (data) => {
       setEditOpen(false);
+      showSuccessToast(t("tasks.toastUpdated"));
       await syncTask(data);
     },
   });
@@ -179,6 +186,7 @@ export function TaskDetailPage({ actorCacheKey, taskId }: TaskDetailPageProps) {
       }),
     onSuccess: async (data) => {
       setProgressOpen(false);
+      showSuccessToast(t("tasks.toastProgressUpdated"));
       await syncTask(data);
     },
   });
@@ -186,6 +194,7 @@ export function TaskDetailPage({ actorCacheKey, taskId }: TaskDetailPageProps) {
     mutationFn: (targetTaskId: string) => fetchApi<{ id: string }>(`/api/tasks/${targetTaskId}`, { method: "DELETE" }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: taskListQueryKey });
+      showSuccessToast(t("tasks.toastDeleted"));
       router.push("/tasks");
     },
   });

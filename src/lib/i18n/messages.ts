@@ -342,6 +342,13 @@ const englishMessages = {
   "tasks.noAttachments": "No attachments yet.",
   "tasks.activity": "Activity",
   "tasks.noActivity": "No activity yet.",
+  "tasks.toastCreated": "Task created.",
+  "tasks.toastUpdated": "Task updated.",
+  "tasks.toastDeleted": "Task deleted.",
+  "tasks.toastCommentPosted": "Comment posted.",
+  "tasks.toastAttachmentUploaded": "Attachment uploaded.",
+  "tasks.toastAttachmentRemoved": "Attachment removed.",
+  "tasks.toastProgressUpdated": "Progress updated.",
 } as const;
 
 export type MessageKey = keyof typeof englishMessages;
@@ -676,6 +683,13 @@ const vietnameseMessages: Partial<Record<MessageKey, string>> = {
   "tasks.noAttachments": "Chưa có file đính kèm.",
   "tasks.activity": "Hoạt động",
   "tasks.noActivity": "Chưa có hoạt động.",
+  "tasks.toastCreated": "Đã tạo công việc.",
+  "tasks.toastUpdated": "Đã cập nhật công việc.",
+  "tasks.toastDeleted": "Đã xóa công việc.",
+  "tasks.toastCommentPosted": "Đã gửi bình luận.",
+  "tasks.toastAttachmentUploaded": "Đã tải file đính kèm lên.",
+  "tasks.toastAttachmentRemoved": "Đã xóa file đính kèm.",
+  "tasks.toastProgressUpdated": "Đã cập nhật tiến độ.",
 };
 const messages: Record<Locale, Partial<Record<MessageKey, string>>> = {
   en: englishMessages,

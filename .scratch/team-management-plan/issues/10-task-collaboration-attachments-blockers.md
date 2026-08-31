@@ -17,3 +17,4 @@
 - [x] Attachments are limited to 2 MB per upload and 5 active files per task across UI, API, and database constraints.
 - [x] Auth-scoped task queries are isolated per signed-in actor and fetched with no-store semantics to prevent admin task data leaking after logout/login.
 - [x] InsForge private storage bucket `task-attachments` is provisioned for authorized task attachment uploads/downloads.
+- [x] Task create, update, delete, comment, attachment, and progress actions show HeroUI top-end success toasts with an explicit variant.

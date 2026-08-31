@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { TasksTable } from "@/components/data-table/tasks-table";
 import { ActionButton } from "@/components/heroui/action-button";
+import { showSuccessToast } from "@/components/heroui/app-toast";
 import { AppModal } from "@/components/heroui/app-modal";
 import { TaskFormModal } from "@/components/tasks/task-form-modal";
 import { EmptyPanel } from "@/components/workspace/empty-panel";
@@ -62,12 +63,17 @@ export function TaskWorkspace({ actorCacheKey }: TaskWorkspaceProps) {
   });
   const createMutation = useMutation({
     mutationFn: (input: TaskFormInput) => fetchApi<TaskDetailPayload>("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(isAssignedTaskInput(input) ? { ...input, taskType: "assigned" } : input) }),
-    onSuccess: async () => { setCreateOpen(false); await queryClient.invalidateQueries({ queryKey: taskListQueryKey }); },
+    onSuccess: async () => {
+      setCreateOpen(false);
+      showSuccessToast(t("tasks.toastCreated"));
+      await queryClient.invalidateQueries({ queryKey: taskListQueryKey });
+    },
   });
   const updateMutation = useMutation({
     mutationFn: ({ taskId, input }: { taskId: string; input: TaskFormInput }) => fetchApi<TaskDetailPayload>(`/api/tasks/${taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(isAssignedTaskInput(input) ? { ...input, taskType: "assigned" } : input) }),
     onSuccess: async (data) => {
       setEditingTaskId(null);
+      showSuccessToast(t("tasks.toastUpdated"));
       await queryClient.invalidateQueries({ queryKey: taskListQueryKey });
       await queryClient.invalidateQueries({ queryKey: createScopedQueryKey(actorCacheKey, "tasks", "detail", data.task.id) });
     },
@@ -76,6 +82,7 @@ export function TaskWorkspace({ actorCacheKey }: TaskWorkspaceProps) {
     mutationFn: (taskId: string) => fetchApi<{ id: string }>(`/api/tasks/${taskId}`, { method: "DELETE" }),
     onSuccess: async () => {
       setDeleteTaskId(null);
+      showSuccessToast(t("tasks.toastDeleted"));
       await queryClient.invalidateQueries({ queryKey: taskListQueryKey });
     },
   });
