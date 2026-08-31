@@ -35,10 +35,10 @@ const taskSchema = z
     status: z.enum(["todo", "in_progress", "blocked", "done", "cancelled"]),
     dueDate: z.string().optional(),
     employeeIds: z.array(z.string().uuid()),
-    teamId: z.union([z.string().uuid(), z.literal("")]),
+    teamIds: z.array(z.string().uuid()),
   })
   .superRefine((values, context) => {
-    if (values.taskType === "assigned" && values.employeeIds.length === 0 && !values.teamId) {
+    if (values.taskType === "assigned" && values.employeeIds.length === 0 && values.teamIds.length === 0) {
       context.addIssue({ code: z.ZodIssueCode.custom, message: "Select at least one person or team.", path: ["employeeIds"] });
     }
   });
@@ -66,7 +66,7 @@ function defaultValues(task: TaskDetail | null): TaskFormValues {
     status: task?.status ?? "todo",
     dueDate: task?.dueDate ?? "",
     employeeIds: task?.assignees.map((assignee) => assignee.employeeId) ?? [],
-    teamId: task?.teamId ?? "",
+    teamIds: task?.teamId ? [task.teamId] : [],
   };
 }
 
@@ -96,11 +96,14 @@ export function TaskFormModal({
   const teamOptions = (assignmentOptions?.teams ?? []).map((team) => ({
     id: team.id,
     name: team.name,
-    detail: `${team.employeeIds.length}`,
   }));
 
   return (
-    <AppModal isOpen={isOpen} size="2xl" onOpenChange={(open) => !open && !isSubmitting && onClose()}>
+    <AppModal
+      isOpen={isOpen}
+      size="2xl"
+      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+    >
       <ModalContent>
         <form
           onSubmit={form.handleSubmit((values) => {
@@ -111,7 +114,8 @@ export function TaskFormModal({
                 priority: values.priority as TaskPriority,
                 dueDate: values.dueDate || null,
                 employeeIds: values.employeeIds,
-                teamId: values.teamId || null,
+                teamIds: values.teamIds,
+                teamId: values.teamIds[0] ?? null,
               });
               return;
             }
@@ -138,7 +142,7 @@ export function TaskFormModal({
               </span>
             </span>
           </ModalHeader>
-          <ModalBody className="max-h-[calc(92dvh-9rem)] overflow-y-auto bg-slate-50/70 px-5 py-5 dark:bg-white/[0.03]">
+          <ModalBody className="max-h-[calc(92dvh-9rem)] overflow-y-auto bg-slate-50/70 px-5 pb-7 pt-5 dark:bg-white/[0.03]">
             {!task ? (
               <Tabs
                 aria-label={t("tasks.assignmentMode")}
@@ -196,8 +200,12 @@ export function TaskFormModal({
                     {!isAssignmentOptionsLoading && employeeOptions.length === 0 ? <FormError>{t("tasks.noEligibleAssignees")}</FormError> : null}
                     {!isAssignmentOptionsLoading && employeeOptions.length > 0 ? <ControlledMultiSelectField ariaLabel={t("tasks.assignees")} control={form.control} label={t("tasks.assignees")} name="employeeIds" options={employeeOptions} placeholder={t("tasks.selectAssignees")} /> : null}
                   </div>
-                  {teamOptions.length > 0 ? <ControlledSelectField ariaLabel={t("tasks.team")} control={form.control} label={t("tasks.team")} name="teamId" options={teamOptions} placeholder={t("tasks.selectTeam")} /> : null}
-                  <p className="self-end text-xs leading-5 text-muted">{t("tasks.assignmentHint")}</p>
+                  <div className="sm:col-span-2">
+                     
+                    {teamOptions.length > 0 ? <ControlledMultiSelectField ariaLabel={t("tasks.team")} control={form.control} label={t("tasks.team")} name="teamIds" options={teamOptions} placeholder={t("tasks.selectTeam")} /> : null}
+                       <p className="self-end text-xs leading-5 text-muted">{t("tasks.assignmentHint")}</p>
+                  </div>
+                
                 </>
               ) : null}
               <div className="sm:col-span-2">
@@ -206,7 +214,7 @@ export function TaskFormModal({
             </div>
             {error ? <FormError>{error}</FormError> : null}
           </ModalBody>
-          <ModalFooter className="border-t border-line bg-panel px-5 py-4">
+          <ModalFooter className="shrink-0 border-t border-line bg-panel px-5 py-4">
             <ActionButton isDisabled={isSubmitting} variant="light" onPress={onClose}>{t("admin.cancel")}</ActionButton>
             <ActionButton color="primary" isDisabled={isAssignedTask && (isAssignmentOptionsLoading || !canChooseAssignedTask)} isLoading={isSubmitting} startContent={<Save aria-hidden size={16} />} type="submit">{t("tasks.save")}</ActionButton>
           </ModalFooter>

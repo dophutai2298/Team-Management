@@ -52,7 +52,7 @@ describe("personal task input", () => {
 });
 
 describe("assigned task input", () => {
-  it("normalizes multi-assignee input and retains an optional team assignment", () => {
+  it("normalizes multi-assignee input and retains multiple team assignments", () => {
     const result = validateAssignedTaskInput({
         title: "  Prepare release train  ",
         description: "  Coordinate the final checks. ",
@@ -63,7 +63,11 @@ describe("assigned task input", () => {
           "22222222-2222-4222-8222-222222222222",
           "11111111-1111-4111-8111-111111111111",
         ],
-        teamId: "33333333-3333-4333-8333-333333333333",
+        teamIds: [
+          "33333333-3333-4333-8333-333333333333",
+          "44444444-4444-4444-8444-444444444444",
+          "33333333-3333-4333-8333-333333333333",
+        ],
       });
     expect(result).toEqual({
       ok: true,
@@ -75,6 +79,10 @@ describe("assigned task input", () => {
         employeeIds: [
           "11111111-1111-4111-8111-111111111111",
           "22222222-2222-4222-8222-222222222222",
+        ],
+        teamIds: [
+          "33333333-3333-4333-8333-333333333333",
+          "44444444-4444-4444-8444-444444444444",
         ],
         teamId: "33333333-3333-4333-8333-333333333333",
       },

@@ -23,6 +23,7 @@ export type AssignedTaskInput = {
   priority: TaskPriority;
   dueDate: string | null;
   employeeIds: string[];
+  teamIds: string[];
   teamId: string | null;
 };
 
@@ -172,7 +173,10 @@ export function validateAssignedTaskInput(input: Record<string, unknown> | null)
   const priority = cleanText(input?.priority).toLowerCase();
   const dueDate = readDate(input?.dueDate);
   const employeeIds = readUuidList(input?.employeeIds);
-  const teamId = readOptionalUuid(input?.teamId);
+  const teamIds = readUuidList(input?.teamIds);
+  const legacyTeamId = readOptionalUuid(input?.teamId);
+  const normalizedTeamIds = teamIds && teamIds.length > 0 ? teamIds : legacyTeamId ? [legacyTeamId] : [];
+  const teamId = normalizedTeamIds[0] ?? null;
 
   if (
     title.length < 2 ||
@@ -181,8 +185,9 @@ export function validateAssignedTaskInput(input: Record<string, unknown> | null)
     !TASK_PRIORITIES.includes(priority as TaskPriority) ||
     dueDate === "" ||
     employeeIds === null ||
-    teamId === undefined ||
-    (employeeIds.length === 0 && !teamId)
+    teamIds === null ||
+    legacyTeamId === undefined ||
+    (employeeIds.length === 0 && normalizedTeamIds.length === 0)
   ) {
     return { ok: false, code: "INVALID_TASK_INPUT" };
   }
@@ -195,6 +200,7 @@ export function validateAssignedTaskInput(input: Record<string, unknown> | null)
       priority: priority as TaskPriority,
       dueDate,
       employeeIds,
+      teamIds: normalizedTeamIds,
       teamId,
     },
   };

@@ -53,7 +53,7 @@ export function TaskDetailModal({ error, isLoading, isOpen, task, onClose, onDel
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-primary/15 bg-primary/10 text-primary"><CalendarDays aria-hidden size={18} /></span>
           <span className="min-w-0"><span className="block text-base font-bold leading-6 text-ink">{t("tasks.detailTitle")}</span><span className="block text-xs font-normal leading-5 text-muted">{task?.title ?? ""}</span></span>
         </ModalHeader>
-        <ModalBody className="max-h-[calc(92dvh-9rem)] overflow-y-auto bg-slate-50/70 px-5 py-5 dark:bg-white/[0.03]">
+        <ModalBody className="max-h-[calc(92dvh-9rem)] overflow-y-auto bg-slate-50/70 px-5 pb-7 pt-5 dark:bg-white/[0.03]">
           {isLoading ? <div className="space-y-4"><Skeleton className="h-7 w-3/4 rounded-lg" /><Skeleton className="h-20 w-full rounded-lg" /><Skeleton className="h-16 w-full rounded-lg" /></div> : null}
           {error ? <EmptyPanel description={error} icon={AlertCircle} title={t("tasks.loadError")} /> : null}
           {task && !isLoading && !error ? (
@@ -70,7 +70,7 @@ export function TaskDetailModal({ error, isLoading, isOpen, task, onClose, onDel
             </div>
           ) : null}
         </ModalBody>
-        {task ? <ModalFooter className="border-t border-line bg-panel px-5 py-4"><ActionButton variant="light" onPress={onClose}>{t("admin.cancel")}</ActionButton>{task.canUpdateOwnProgress ? <ActionButton color="primary" startContent={<Gauge aria-hidden size={16} />} variant="flat" onPress={onUpdateProgress}>{t("tasks.updateProgress")}</ActionButton> : null}{task.canDelete ? <ActionButton color="danger" startContent={<Trash2 aria-hidden size={16} />} variant="flat" onPress={onDelete}>{t("tasks.delete")}</ActionButton> : null}{task.canEdit ? <ActionButton color="primary" startContent={<Pencil aria-hidden size={16} />} onPress={onEdit}>{task.canManageAssignment ? t("tasks.editAssignedTitle") : t("tasks.editTitle")}</ActionButton> : null}</ModalFooter> : null}
+        {task ? <ModalFooter className="shrink-0 border-t border-line bg-panel px-5 py-4"><ActionButton variant="light" onPress={onClose}>{t("admin.cancel")}</ActionButton>{task.canUpdateOwnProgress ? <ActionButton color="primary" startContent={<Gauge aria-hidden size={16} />} variant="flat" onPress={onUpdateProgress}>{t("tasks.updateProgress")}</ActionButton> : null}{task.canDelete ? <ActionButton color="danger" startContent={<Trash2 aria-hidden size={16} />} variant="flat" onPress={onDelete}>{t("tasks.delete")}</ActionButton> : null}{task.canEdit ? <ActionButton color="primary" startContent={<Pencil aria-hidden size={16} />} onPress={onEdit}>{task.canManageAssignment ? t("tasks.editAssignedTitle") : t("tasks.editTitle")}</ActionButton> : null}</ModalFooter> : null}
       </ModalContent>
     </AppModal>
   );

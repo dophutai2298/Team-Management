@@ -326,15 +326,15 @@ async function resolveAssigneeIds(actor: CurrentActor, input: AssignedTaskInput)
     throw new TaskAssignmentInputError();
   }
 
-  const teamEmployeeIds = input.teamId
-    ? options.teams.find((team) => team.id === input.teamId)?.employeeIds
-    : [];
+  const teamsById = new Map(options.teams.map((team) => [team.id, team]));
+  const selectedTeams = input.teamIds.map((teamId) => teamsById.get(teamId));
 
-  if (input.teamId && !teamEmployeeIds) {
+  if (selectedTeams.some((team) => !team)) {
     throw new TaskAssignmentInputError();
   }
 
-  const assigneeIds = [...new Set([...input.employeeIds, ...(teamEmployeeIds ?? [])])];
+  const teamEmployeeIds = selectedTeams.flatMap((team) => team?.employeeIds ?? []);
+  const assigneeIds = [...new Set([...input.employeeIds, ...teamEmployeeIds])];
   if (assigneeIds.length === 0) {
     throw new TaskAssignmentInputError("Select at least one eligible assignee.");
   }
