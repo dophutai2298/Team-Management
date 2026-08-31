@@ -5,6 +5,7 @@ import { getInsForgeAdminClient } from "@/lib/insforge/admin";
 import { isOptionalTaskCollaborationSchemaError } from "@/lib/task/collaboration-errors";
 
 import {
+  canAddTaskAttachment,
   canDeleteAssignedTask,
   canAssignEmployee,
   canManageAssignment,
@@ -25,6 +26,7 @@ import {
   type TaskComment,
   type TaskCommentInput,
   type TaskActivity,
+  TaskAttachmentInputError,
   TaskAssignmentInputError,
   type TaskDetail,
   type TaskPriority,
@@ -650,6 +652,9 @@ export async function createTaskAttachment(
 ): Promise<TaskDetail | null> {
   const task = await getAccessibleTask(actor, taskId);
   if (!task) return null;
+  if (!canAddTaskAttachment(task.attachments.length)) {
+    throw new TaskAttachmentInputError("Each task can have up to 5 attachments.");
+  }
 
   const client = getInsForgeAdminClient();
   const attachmentId = crypto.randomUUID();

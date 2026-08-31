@@ -17,6 +17,13 @@ import {
 import { createAssignedTask, createPersonalTask, getTaskAssignmentOptions, listAccessibleTasks } from "@/lib/task/repository";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
+const privateNoStoreHeaders = {
+  "Cache-Control": "private, no-store, no-cache, max-age=0, must-revalidate",
+  Pragma: "no-cache",
+} as const;
 
 async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
   try {
@@ -47,7 +54,9 @@ export async function GET(): Promise<NextResponse<ApiResponse<{ tasks: TaskSumma
       throw new AuthorizationError("FORBIDDEN", 403);
     }
 
-    return NextResponse.json(apiSuccess({ tasks: await listAccessibleTasks(actor) }));
+    return NextResponse.json(apiSuccess({ tasks: await listAccessibleTasks(actor) }), {
+      headers: privateNoStoreHeaders,
+    });
   } catch (error) {
     return taskRouteFailure(error);
   }

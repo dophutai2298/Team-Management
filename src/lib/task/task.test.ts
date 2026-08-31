@@ -4,6 +4,7 @@ import type { AuthorizationActor } from "@/lib/authorization/authorization";
 
 import {
   canAccessTaskWorkspace,
+  canAddTaskAttachment,
   canAssignEmployee,
   canManagePersonalTask,
   canRemoveTaskAttachment,
@@ -12,6 +13,7 @@ import {
   isTaskId,
   validateTaskAttachmentUploadInput,
   TASK_ATTACHMENT_IMAGE_MAX_BYTES,
+  TASK_ATTACHMENT_MAX_FILES,
   TASK_ATTACHMENT_MAX_BYTES,
   validateTaskCommentInput,
   validateAssignedTaskInput,
@@ -249,5 +251,11 @@ describe("task collaboration input", () => {
         fileSizeBytes: 128,
       }),
     ).toEqual({ ok: false, code: "INVALID_TASK_ATTACHMENT" });
+  });
+
+  it("caps active attachments at five files per task", () => {
+    expect(canAddTaskAttachment(TASK_ATTACHMENT_MAX_FILES - 1)).toBe(true);
+    expect(canAddTaskAttachment(TASK_ATTACHMENT_MAX_FILES)).toBe(false);
+    expect(canAddTaskAttachment(-1)).toBe(false);
   });
 });

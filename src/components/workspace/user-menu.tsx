@@ -8,16 +8,19 @@ import {
   DropdownSection,
   DropdownTrigger,
 } from "@heroui/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import { useLocale } from "@/lib/i18n/locale-provider";
 
 export function UserMenu() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { t } = useLocale();
 
   async function signOut() {
     await fetch("/api/auth/sign-out", { method: "POST" });
+    queryClient.clear();
     router.replace("/login");
     router.refresh();
   }

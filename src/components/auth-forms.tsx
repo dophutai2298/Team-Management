@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
@@ -55,6 +55,7 @@ function getErrorMessage(error: unknown): string {
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const { t } = useLocale();
   const schema = useMemo(() => createSignInSchema(t), [t]);
   const { control, handleSubmit } = useForm<SignInValues>({
@@ -68,7 +69,11 @@ export function SignInForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...values, returnTo: getSafeInternalPath(searchParams.get("returnTo")) }),
       }),
-    onSuccess: (result) => router.replace(result.next),
+    onSuccess: (result) => {
+      queryClient.clear();
+      router.replace(result.next);
+      router.refresh();
+    },
   });
 
   return (

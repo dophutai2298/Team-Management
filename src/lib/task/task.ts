@@ -131,8 +131,9 @@ export type TaskDetail = TaskSummary & {
 };
 
 export const TASK_ATTACHMENT_BUCKET = "task-attachments";
-export const TASK_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
-export const TASK_ATTACHMENT_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+export const TASK_ATTACHMENT_MAX_BYTES = 2 * 1024 * 1024;
+export const TASK_ATTACHMENT_IMAGE_MAX_BYTES = TASK_ATTACHMENT_MAX_BYTES;
+export const TASK_ATTACHMENT_MAX_FILES = 5;
 export const TASK_ATTACHMENT_ALLOWED_TYPES = [
   "image/jpeg",
   "image/png",
@@ -179,6 +180,13 @@ export class TaskAssignmentInputError extends Error {
   constructor(message = "The selected task assignees are no longer available.") {
     super(message);
     this.name = "TaskAssignmentInputError";
+  }
+}
+
+export class TaskAttachmentInputError extends Error {
+  constructor(message = "Upload an allowed file type within the configured size limit.") {
+    super(message);
+    this.name = "TaskAttachmentInputError";
   }
 }
 
@@ -372,6 +380,10 @@ export function validateTaskAttachmentUploadInput(input: TaskAttachmentUploadInp
       fileSizeBytes: input.fileSizeBytes,
     },
   };
+}
+
+export function canAddTaskAttachment(currentAttachmentCount: number): boolean {
+  return Number.isInteger(currentAttachmentCount) && currentAttachmentCount >= 0 && currentAttachmentCount < TASK_ATTACHMENT_MAX_FILES;
 }
 
 export function isTaskId(value: unknown): value is string {
