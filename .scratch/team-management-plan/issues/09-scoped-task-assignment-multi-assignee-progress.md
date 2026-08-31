@@ -4,11 +4,11 @@
 
 **Blocked by:** 07: Team hierarchy and read-only organization view; 08: Task workspace foundation.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Admin can assign tasks to any permitted employee set.
-- [ ] Parent users can assign tasks only to descendants in their reportsTo subtree.
-- [ ] Team assignment expands into task assignees according to authorized team visibility.
-- [ ] Each assignee has independent status, progress, completion, and blocked reason fields.
-- [ ] Overall task progress is derived from assignee progress.
-- [ ] Assignment, deadline, and assignee changes are authorized and audited.
+- [x] Admin can assign tasks to any permitted employee set.
+- [x] Parent users can assign tasks only to descendants in their reportsTo subtree.
+- [x] Team assignment expands into task assignees according to authorized team visibility.
+- [x] Each assignee has independent status, progress, completion, and blocked reason fields.
+- [x] Overall task progress is derived from assignee progress.
+- [x] Assignment, deadline, and assignee changes are authorized and audited.

@@ -1,7 +1,7 @@
 "use client";
 
 import { Chip, Divider, ModalBody, ModalContent, ModalFooter, ModalHeader, Skeleton } from "@heroui/react";
-import { AlertCircle, CalendarDays, Pencil, Trash2, UserRound } from "lucide-react";
+import { AlertCircle, CalendarDays, Gauge, Pencil, Trash2, UserRound } from "lucide-react";
 
 import { ActionButton } from "@/components/heroui/action-button";
 import { AppModal } from "@/components/heroui/app-modal";
@@ -18,6 +18,7 @@ type TaskDetailModalProps = {
   onClose: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onUpdateProgress: () => void;
 };
 
 function statusKey(status: TaskStatus): MessageKey {
@@ -41,7 +42,7 @@ function priorityKey(priority: TaskPriority): MessageKey {
   return keys[priority];
 }
 
-export function TaskDetailModal({ error, isLoading, isOpen, task, onClose, onDelete, onEdit }: TaskDetailModalProps) {
+export function TaskDetailModal({ error, isLoading, isOpen, task, onClose, onDelete, onEdit, onUpdateProgress }: TaskDetailModalProps) {
   const { locale, t } = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-US", { dateStyle: "medium" });
 
@@ -65,11 +66,11 @@ export function TaskDetailModal({ error, isLoading, isOpen, task, onClose, onDel
                 <div><p className="text-xs font-semibold text-muted">{t("tasks.dueDate")}</p><p className="mt-1 text-sm font-semibold text-ink">{task.dueDate ? dateFormatter.format(new Date(`${task.dueDate}T00:00:00`)) : t("tasks.noDueDate")}</p></div>
               </div>
               <Divider className="bg-line" />
-              <section><p className="text-sm font-bold text-ink">{t("tasks.assigneeSummary")}</p>{task.assignees.length === 0 ? <p className="mt-2 text-sm leading-6 text-muted">{t("tasks.placeholderAssignee")}</p> : <div className="mt-3 space-y-2">{task.assignees.map((assignee) => <div key={assignee.employeeId} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel px-3 py-2.5"><span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-ink"><UserRound aria-hidden className="shrink-0 text-muted" size={15} /><span className="truncate">{assignee.fullName}</span></span><Chip className="h-6 shrink-0 px-2 text-xs" radius="sm" size="sm" variant="flat">{assignee.progress}%</Chip></div>)}</div>}</section>
+              <section><p className="text-sm font-bold text-ink">{t("tasks.assigneeSummary")}</p>{task.assignees.length === 0 ? <p className="mt-2 text-sm leading-6 text-muted">{t("tasks.placeholderAssignee")}</p> : <div className="mt-3 space-y-2">{task.assignees.map((assignee) => <div key={assignee.employeeId} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel px-3 py-2.5"><span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-ink"><UserRound aria-hidden className="shrink-0 text-muted" size={15} /><span className="truncate">{assignee.fullName}</span></span><span className="flex shrink-0 items-center gap-2"><span className="text-xs text-muted">{t(statusKey(assignee.status))}</span><Chip className="h-6 px-2 text-xs" radius="sm" size="sm" variant="flat">{assignee.progress}%</Chip></span></div>)}</div>}</section>
             </div>
           ) : null}
         </ModalBody>
-        {task ? <ModalFooter className="border-t border-line bg-panel px-5 py-4"><ActionButton variant="light" onPress={onClose}>{t("admin.cancel")}</ActionButton>{task.canDelete ? <ActionButton color="danger" startContent={<Trash2 aria-hidden size={16} />} variant="flat" onPress={onDelete}>{t("tasks.delete")}</ActionButton> : null}{task.canEdit ? <ActionButton color="primary" startContent={<Pencil aria-hidden size={16} />} onPress={onEdit}>{t("tasks.editTitle")}</ActionButton> : null}</ModalFooter> : null}
+        {task ? <ModalFooter className="border-t border-line bg-panel px-5 py-4"><ActionButton variant="light" onPress={onClose}>{t("admin.cancel")}</ActionButton>{task.canUpdateOwnProgress ? <ActionButton color="primary" startContent={<Gauge aria-hidden size={16} />} variant="flat" onPress={onUpdateProgress}>{t("tasks.updateProgress")}</ActionButton> : null}{task.canDelete ? <ActionButton color="danger" startContent={<Trash2 aria-hidden size={16} />} variant="flat" onPress={onDelete}>{t("tasks.delete")}</ActionButton> : null}{task.canEdit ? <ActionButton color="primary" startContent={<Pencil aria-hidden size={16} />} onPress={onEdit}>{task.canManageAssignment ? t("tasks.editAssignedTitle") : t("tasks.editTitle")}</ActionButton> : null}</ModalFooter> : null}
       </ModalContent>
     </AppModal>
   );

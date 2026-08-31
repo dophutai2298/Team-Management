@@ -10,15 +10,22 @@ import { ActionButton } from "@/components/heroui/action-button";
 import { AppModal } from "@/components/heroui/app-modal";
 import { TaskDetailModal } from "@/components/tasks/task-detail-modal";
 import { TaskFormModal } from "@/components/tasks/task-form-modal";
+import { TaskProgressModal } from "@/components/tasks/task-progress-modal";
 import { EmptyPanel } from "@/components/workspace/empty-panel";
 import { PageHeader } from "@/components/workspace/page-header";
 import { WorkspacePanel } from "@/components/workspace/workspace-panel";
 import { ApiClientError, fetchApi } from "@/lib/api/client";
 import { useLocale } from "@/lib/i18n/locale-provider";
-import type { PersonalTaskInput, TaskDetail, TaskSummary } from "@/lib/task/task";
+import type { AssignedTaskInput, AssignmentProgressInput, PersonalTaskInput, TaskAssignmentOptions, TaskDetail, TaskSummary } from "@/lib/task/task";
 
 type TaskListPayload = { tasks: TaskSummary[] };
 type TaskDetailPayload = { task: TaskDetail };
+type TaskAssignmentOptionsPayload = TaskAssignmentOptions;
+type TaskFormInput = PersonalTaskInput | AssignedTaskInput;
+
+function isAssignedTaskInput(input: TaskFormInput): input is AssignedTaskInput {
+  return "employeeIds" in input;
+}
 
 function TaskSkeleton() {
   return <div aria-busy="true" className="space-y-3"><Skeleton className="h-12 w-full rounded-lg" /><Skeleton className="h-12 w-full rounded-lg" /><Skeleton className="h-12 w-full rounded-lg" /></div>;
@@ -34,6 +41,7 @@ export function TaskWorkspace() {
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [progressTaskId, setProgressTaskId] = useState<string | null>(null);
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
   const tasksQuery = useQuery({ queryKey: ["tasks"], queryFn: () => fetchApi<TaskListPayload>("/api/tasks") });
   const detailQuery = useQuery({
@@ -41,12 +49,17 @@ export function TaskWorkspace() {
     queryFn: () => fetchApi<TaskDetailPayload>(`/api/tasks/${selectedTaskId}`),
     enabled: Boolean(selectedTaskId),
   });
+  const assignmentOptionsQuery = useQuery({
+    queryKey: ["tasks", "assignment-options"],
+    queryFn: () => fetchApi<TaskAssignmentOptionsPayload>("/api/tasks/assignment-options"),
+    enabled: createOpen || Boolean(editingTaskId),
+  });
   const createMutation = useMutation({
-    mutationFn: (input: PersonalTaskInput) => fetchApi<TaskDetailPayload>("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) }),
+    mutationFn: (input: TaskFormInput) => fetchApi<TaskDetailPayload>("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(isAssignedTaskInput(input) ? { ...input, taskType: "assigned" } : input) }),
     onSuccess: async () => { setCreateOpen(false); await queryClient.invalidateQueries({ queryKey: ["tasks"] }); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ taskId, input }: { taskId: string; input: PersonalTaskInput }) => fetchApi<TaskDetailPayload>(`/api/tasks/${taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) }),
+    mutationFn: ({ taskId, input }: { taskId: string; input: TaskFormInput }) => fetchApi<TaskDetailPayload>(`/api/tasks/${taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(isAssignedTaskInput(input) ? { ...input, taskType: "assigned" } : input) }),
     onSuccess: async (data) => {
       setEditingTaskId(null);
       setSelectedTaskId(data.task.id);
@@ -60,6 +73,15 @@ export function TaskWorkspace() {
       setDeleteTaskId(null);
       setSelectedTaskId(null);
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+  const progressMutation = useMutation({
+    mutationFn: ({ taskId, employeeId, input }: { taskId: string; employeeId: string; input: AssignmentProgressInput }) => fetchApi<TaskDetailPayload>(`/api/tasks/${taskId}/assignees/${employeeId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) }),
+    onSuccess: async (data) => {
+      setProgressTaskId(null);
+      setSelectedTaskId(data.task.id);
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      await queryClient.invalidateQueries({ queryKey: ["tasks", data.task.id] });
     },
   });
   const tasks = tasksQuery.data?.tasks ?? [];
@@ -87,9 +109,10 @@ export function TaskWorkspace() {
           {!tasksQuery.isPending && !tasksQuery.isError && tasks.length > 0 ? <div className="-mx-5 -mb-5 md:-mx-6 md:-mb-6"><TasksTable tasks={tasks} onDelete={setDeleteTaskId} onEdit={(taskId) => { setEditingTaskId(taskId); setSelectedTaskId(taskId); }} onView={setSelectedTaskId} /></div> : null}
         </WorkspacePanel>
       </section>
-      <TaskDetailModal error={detailQuery.isError ? errorMessage(detailQuery.error, t("tasks.errorGeneric")) : undefined} isLoading={detailQuery.isPending} isOpen={Boolean(selectedTaskId) && (!isEditing || detailQuery.isError)} task={detail} onClose={() => { setEditingTaskId(null); setSelectedTaskId(null); }} onDelete={() => detail && setDeleteTaskId(detail.id)} onEdit={() => detail && setEditingTaskId(detail.id)} />
-      <TaskFormModal error={createMutation.isError ? errorMessage(createMutation.error, t("tasks.errorGeneric")) : undefined} isOpen={createOpen} isSubmitting={createMutation.isPending} task={null} onClose={() => setCreateOpen(false)} onSubmit={(input) => createMutation.mutate(input)} />
-      <TaskFormModal error={updateMutation.isError ? errorMessage(updateMutation.error, t("tasks.errorGeneric")) : undefined} isOpen={isEditing && Boolean(detail)} isSubmitting={updateMutation.isPending} task={detail} onClose={() => setEditingTaskId(null)} onSubmit={(input) => editingTaskId && updateMutation.mutate({ taskId: editingTaskId, input })} />
+      <TaskDetailModal error={detailQuery.isError ? errorMessage(detailQuery.error, t("tasks.errorGeneric")) : undefined} isLoading={detailQuery.isPending} isOpen={Boolean(selectedTaskId) && (!isEditing || detailQuery.isError) && !progressTaskId} task={detail} onClose={() => { setEditingTaskId(null); setProgressTaskId(null); setSelectedTaskId(null); }} onDelete={() => detail && setDeleteTaskId(detail.id)} onEdit={() => detail && setEditingTaskId(detail.id)} onUpdateProgress={() => detail && setProgressTaskId(detail.id)} />
+      <TaskFormModal assignmentOptions={assignmentOptionsQuery.data ?? null} error={createMutation.isError ? errorMessage(createMutation.error, t("tasks.errorGeneric")) : undefined} isAssignmentOptionsLoading={assignmentOptionsQuery.isPending} isOpen={createOpen} isSubmitting={createMutation.isPending} task={null} onClose={() => setCreateOpen(false)} onSubmit={(input) => createMutation.mutate(input)} />
+      <TaskFormModal assignmentOptions={assignmentOptionsQuery.data ?? null} error={updateMutation.isError ? errorMessage(updateMutation.error, t("tasks.errorGeneric")) : undefined} isAssignmentOptionsLoading={assignmentOptionsQuery.isPending} isOpen={isEditing && Boolean(detail)} isSubmitting={updateMutation.isPending} task={detail} onClose={() => setEditingTaskId(null)} onSubmit={(input) => editingTaskId && updateMutation.mutate({ taskId: editingTaskId, input })} />
+      <TaskProgressModal error={progressMutation.isError ? errorMessage(progressMutation.error, t("tasks.errorGeneric")) : undefined} isOpen={Boolean(progressTaskId) && Boolean(detail?.ownAssignee)} isSubmitting={progressMutation.isPending} task={detail} onClose={() => setProgressTaskId(null)} onSubmit={(input) => detail?.ownAssignee && progressTaskId && progressMutation.mutate({ taskId: progressTaskId, employeeId: detail.ownAssignee.employeeId, input })} />
       <AppModal isOpen={Boolean(deleteTaskId)} size="md" onOpenChange={(open) => !open && !deleteMutation.isPending && setDeleteTaskId(null)}>
         <ModalContent><ModalHeader className="border-b border-line px-5 py-4 pr-16 text-base font-bold text-ink">{t("tasks.deleteTitle")}</ModalHeader><ModalBody className="bg-slate-50/70 px-5 py-5 text-sm leading-6 text-muted dark:bg-white/[0.03]">{t("tasks.deleteDescription")}{deleteMutation.isError ? <p className="mt-3 text-danger">{errorMessage(deleteMutation.error, t("tasks.errorGeneric"))}</p> : null}</ModalBody><ModalFooter className="border-t border-line bg-panel px-5 py-4"><ActionButton isDisabled={deleteMutation.isPending} variant="light" onPress={() => setDeleteTaskId(null)}>{t("admin.cancel")}</ActionButton><ActionButton color="danger" isLoading={deleteMutation.isPending} onPress={() => deleteTaskId && deleteMutation.mutate(deleteTaskId)}>{t("tasks.delete")}</ActionButton></ModalFooter></ModalContent>
       </AppModal>

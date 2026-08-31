@@ -4,8 +4,16 @@ import { apiFailure, apiSuccess, type ApiResponse } from "@/lib/api/response";
 import { AuthorizationError } from "@/lib/authorization/authorization";
 import { getCurrentActor, type CurrentActor } from "@/lib/auth/session";
 import { taskRouteFailure } from "@/lib/task/http";
-import { canAccessTaskWorkspace, isTaskId, validatePersonalTaskInput, type TaskDetail } from "@/lib/task/task";
-import { deletePersonalTask, getAccessibleTask, updatePersonalTask } from "@/lib/task/repository";
+import {
+  canAccessTaskWorkspace,
+  isTaskId,
+  validateAssignedTaskInput,
+  validatePersonalTaskInput,
+  type TaskDetail,
+  type AssignedTaskInput,
+  type PersonalTaskInput,
+} from "@/lib/task/task";
+import { deletePersonalTask, getAccessibleTask, updateAssignedTask, updatePersonalTask } from "@/lib/task/repository";
 
 type RouteContext = { params: Promise<{ taskId: string }> };
 
@@ -65,13 +73,18 @@ export async function PATCH(
 
   if (!isTaskId(taskId)) return invalidTaskIdResponse<{ task: TaskDetail }>();
 
-  const validation = validatePersonalTaskInput(await readJsonBody(request));
+  const input = await readJsonBody(request);
+  const isAssignedTask = input?.taskType === "assigned";
+  const validation = isAssignedTask ? validateAssignedTaskInput(input) : validatePersonalTaskInput(input);
   if (!validation.ok) {
-    return NextResponse.json(apiFailure(validation.code, "Invalid personal task input."), { status: 400 });
+    return NextResponse.json(apiFailure(validation.code, "Invalid task input."), { status: 400 });
   }
 
   try {
-    const task = await updatePersonalTask(await requireTaskActor(), taskId, validation.value);
+    const actor = await requireTaskActor();
+    const task = isAssignedTask
+      ? await updateAssignedTask(actor, taskId, validation.value as AssignedTaskInput, crypto.randomUUID())
+      : await updatePersonalTask(actor, taskId, validation.value as PersonalTaskInput);
 
     return task ? NextResponse.json(apiSuccess({ task })) : taskNotFoundResponse<{ task: TaskDetail }>();
   } catch (error) {

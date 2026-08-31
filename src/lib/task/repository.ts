@@ -4,10 +4,20 @@ import type { CurrentActor } from "@/lib/auth/session";
 import { getInsForgeAdminClient } from "@/lib/insforge/admin";
 
 import {
+  canDeleteAssignedTask,
+  canAssignEmployee,
+  canManageAssignment,
   canManagePersonalTask,
   canReadTask,
+  canUpdateOwnAssignmentProgress,
+  type AssignedTaskInput,
+  type AssignmentProgressInput,
   type PersonalTaskInput,
+  type TaskAssignmentEmployee,
+  type TaskAssignmentOptions,
+  type TaskAssignmentTeam,
   type TaskAssigneeSummary,
+  TaskAssignmentInputError,
   type TaskDetail,
   type TaskPriority,
   type TaskStatus,
@@ -21,6 +31,7 @@ type TaskRow = {
   title: string;
   description: string | null;
   creator_employee_id: string;
+  assigner_employee_id: string | null;
   team_id: string | null;
   priority: TaskPriority;
   status: TaskStatus;
@@ -40,11 +51,21 @@ type TaskAssigneeRow = {
 type EmployeeRow = {
   id: string;
   full_name: string;
+  employee_code: string | null;
 };
 
 type TeamRow = {
   id: string;
   name: string;
+};
+
+type AssignmentEmployeeRow = EmployeeRow & {
+  account_status: string;
+};
+
+type MembershipRow = {
+  employee_id: string;
+  team_id: string;
 };
 
 type TaskRecord = TaskRow & {
@@ -54,7 +75,7 @@ type TaskRecord = TaskRow & {
 };
 
 const taskColumns =
-  "id, task_type, title, description, creator_employee_id, team_id, priority, status, progress, due_date, updated_at";
+  "id, task_type, title, description, creator_employee_id, assigner_employee_id, team_id, priority, status, progress, due_date, updated_at";
 
 async function hydrateTasks(rows: TaskRow[]): Promise<TaskRecord[]> {
   if (rows.length === 0) {
@@ -75,7 +96,7 @@ async function hydrateTasks(rows: TaskRow[]): Promise<TaskRecord[]> {
   const employeeIds = [...new Set([...rows.map((row) => row.creator_employee_id), ...assigneeRows.map((row) => row.employee_id)])];
   const teamIds = [...new Set(rows.map((row) => row.team_id).filter((teamId): teamId is string => Boolean(teamId)))];
   const [employeesResult, teamsResult] = await Promise.all([
-    client.database.from("employees").select("id, full_name").in("id", employeeIds).limit(1_000),
+    client.database.from("employees").select("id, full_name, employee_code").in("id", employeeIds).limit(1_000),
     teamIds.length > 0 ? client.database.from("teams").select("id, name").in("id", teamIds).limit(500) : null,
   ]);
 
@@ -114,6 +135,20 @@ function toTaskDetail(actor: CurrentActor, task: TaskRecord): TaskDetail {
     assigneeEmployeeIds: task.assignees.map((assignee) => assignee.employeeId),
   } as const;
 
+  const canManageTask =
+    task.task_type === "personal"
+      ? canManagePersonalTask(actor, "update", target)
+      : canManageAssignment(actor, target);
+  const canDeleteTask =
+    task.task_type === "personal"
+      ? canManagePersonalTask(actor, "delete", target)
+      : canDeleteAssignedTask(actor, target);
+  const canUpdateOwnProgress = Boolean(
+    task.task_type === "assigned" &&
+      actor.employeeId &&
+      task.assignees.some((assignee) => canUpdateOwnAssignmentProgress(actor, assignee.employeeId)),
+  );
+
   return {
     ...target,
     id: task.id,
@@ -128,8 +163,11 @@ function toTaskDetail(actor: CurrentActor, task: TaskRecord): TaskDetail {
     assigneeNames: task.assignees.map((assignee) => assignee.fullName),
     updatedAt: task.updated_at,
     assignees: task.assignees,
-    canEdit: canManagePersonalTask(actor, "update", target),
-    canDelete: canManagePersonalTask(actor, "delete", target),
+    ownAssignee: task.assignees.find((assignee) => assignee.employeeId === actor.employeeId) ?? null,
+    canEdit: canManageTask,
+    canDelete: canDeleteTask,
+    canManageAssignment: task.task_type === "assigned" && canManageTask,
+    canUpdateOwnProgress,
   };
 }
 
@@ -140,6 +178,15 @@ function toTaskSummary(actor: CurrentActor, task: TaskRecord): TaskSummary {
     teamId: task.team_id,
     assigneeEmployeeIds: task.assignees.map((assignee) => assignee.employeeId),
   } as const;
+
+  const canEdit =
+    task.task_type === "personal"
+      ? canManagePersonalTask(actor, "update", target)
+      : canManageAssignment(actor, target);
+  const canDelete =
+    task.task_type === "personal"
+      ? canManagePersonalTask(actor, "delete", target)
+      : canDeleteAssignedTask(actor, target);
 
   return {
     ...target,
@@ -153,8 +200,8 @@ function toTaskSummary(actor: CurrentActor, task: TaskRecord): TaskSummary {
     teamName: task.teamName,
     assigneeNames: task.assignees.map((assignee) => assignee.fullName),
     updatedAt: task.updated_at,
-    canEdit: canManagePersonalTask(actor, "update", target),
-    canDelete: canManagePersonalTask(actor, "delete", target),
+    canEdit,
+    canDelete,
   };
 }
 
@@ -201,6 +248,177 @@ export async function getAccessibleTask(actor: CurrentActor, taskId: string): Pr
   } as const;
 
   return canReadTask(actor, target) ? toTaskDetail(actor, task) : null;
+}
+
+export async function getTaskAssignmentOptions(actor: CurrentActor): Promise<TaskAssignmentOptions> {
+  const client = getInsForgeAdminClient();
+  const [employeesResult, teamsResult, membershipsResult] = await Promise.all([
+    client.database
+      .from("employees")
+      .select("id, full_name, employee_code, account_status")
+      .eq("account_status", "active")
+      .order("full_name")
+      .limit(1_000),
+    client.database.from("teams").select("id, name").eq("is_active", true).order("name").limit(500),
+    client.database
+      .from("team_memberships")
+      .select("employee_id, team_id")
+      .eq("is_active", true)
+      .limit(3_000),
+  ]);
+
+  if (employeesResult.error) throw employeesResult.error;
+  if (teamsResult.error) throw teamsResult.error;
+  if (membershipsResult.error) throw membershipsResult.error;
+
+  const eligibleEmployees = ((employeesResult.data ?? []) as AssignmentEmployeeRow[]).filter((employee) =>
+    canAssignEmployee(actor, employee.id),
+  );
+  const eligibleEmployeeIds = new Set(eligibleEmployees.map((employee) => employee.id));
+  const teams = (teamsResult.data ?? []) as TeamRow[];
+  const memberships = (membershipsResult.data ?? []) as MembershipRow[];
+  const teamNames = new Map(teams.map((team) => [team.id, team.name]));
+  const teamIdsByEmployee = new Map<string, string[]>();
+  const employeeIdsByTeam = new Map<string, string[]>();
+
+  for (const membership of memberships) {
+    teamIdsByEmployee.set(membership.employee_id, [
+      ...(teamIdsByEmployee.get(membership.employee_id) ?? []),
+      membership.team_id,
+    ]);
+
+    if (eligibleEmployeeIds.has(membership.employee_id)) {
+      employeeIdsByTeam.set(membership.team_id, [
+        ...(employeeIdsByTeam.get(membership.team_id) ?? []),
+        membership.employee_id,
+      ]);
+    }
+  }
+
+  const employees: TaskAssignmentEmployee[] = eligibleEmployees.map((employee) => ({
+    id: employee.id,
+    fullName: employee.full_name,
+    employeeCode: employee.employee_code,
+    teamNames: (teamIdsByEmployee.get(employee.id) ?? [])
+      .map((teamId) => teamNames.get(teamId))
+      .filter((name): name is string => Boolean(name)),
+  }));
+  const assignmentTeams: TaskAssignmentTeam[] = teams
+    .map((team) => ({
+      id: team.id,
+      name: team.name,
+      employeeIds: [...new Set(employeeIdsByTeam.get(team.id) ?? [])],
+    }))
+    .filter((team) => team.employeeIds.length > 0);
+
+  return {
+    canAssign: employees.length > 0,
+    employees,
+    teams: assignmentTeams,
+  };
+}
+
+async function resolveAssigneeIds(actor: CurrentActor, input: AssignedTaskInput): Promise<string[]> {
+  const options = await getTaskAssignmentOptions(actor);
+  const selectableEmployeeIds = new Set(options.employees.map((employee) => employee.id));
+
+  if (input.employeeIds.some((employeeId) => !selectableEmployeeIds.has(employeeId))) {
+    throw new TaskAssignmentInputError();
+  }
+
+  const teamEmployeeIds = input.teamId
+    ? options.teams.find((team) => team.id === input.teamId)?.employeeIds
+    : [];
+
+  if (input.teamId && !teamEmployeeIds) {
+    throw new TaskAssignmentInputError();
+  }
+
+  const assigneeIds = [...new Set([...input.employeeIds, ...(teamEmployeeIds ?? [])])];
+  if (assigneeIds.length === 0) {
+    throw new TaskAssignmentInputError("Select at least one eligible assignee.");
+  }
+
+  return assigneeIds;
+}
+
+export async function createAssignedTask(
+  actor: CurrentActor & { employeeId: string },
+  input: AssignedTaskInput,
+  requestId: string,
+): Promise<TaskDetail> {
+  const assigneeIds = await resolveAssigneeIds(actor, input);
+  const { data, error } = await getInsForgeAdminClient().database.rpc("create_assigned_task", {
+    p_creator_employee_id: actor.employeeId,
+    p_team_id: input.teamId,
+    p_title: input.title,
+    p_description: input.description,
+    p_priority: input.priority,
+    p_due_date: input.dueDate,
+    p_assignee_employee_ids: assigneeIds,
+    p_request_id: requestId,
+  });
+
+  if (error) throw error;
+  if (typeof data !== "string") throw new Error("Could not create assigned task.");
+
+  const task = await getAccessibleTask(actor, data);
+  if (!task) throw new Error("Could not load assigned task.");
+
+  return task;
+}
+
+export async function updateAssignedTask(
+  actor: CurrentActor & { employeeId: string },
+  taskId: string,
+  input: AssignedTaskInput,
+  requestId: string,
+): Promise<TaskDetail | null> {
+  const currentTask = await getAccessibleTask(actor, taskId);
+  if (!currentTask?.canManageAssignment) return null;
+
+  const assigneeIds = await resolveAssigneeIds(actor, input);
+  const { data, error } = await getInsForgeAdminClient().database.rpc("update_assigned_task", {
+    p_task_id: taskId,
+    p_actor_employee_id: actor.employeeId,
+    p_team_id: input.teamId,
+    p_title: input.title,
+    p_description: input.description,
+    p_priority: input.priority,
+    p_due_date: input.dueDate,
+    p_assignee_employee_ids: assigneeIds,
+    p_request_id: requestId,
+  });
+
+  if (error) throw error;
+  if (typeof data !== "string") throw new Error("Could not update assigned task.");
+
+  return getAccessibleTask(actor, data);
+}
+
+export async function updateOwnAssignmentProgress(
+  actor: CurrentActor & { employeeId: string },
+  taskId: string,
+  input: AssignmentProgressInput,
+  requestId: string,
+): Promise<TaskDetail | null> {
+  const task = await getAccessibleTask(actor, taskId);
+  if (!task?.canUpdateOwnProgress) return null;
+
+  const { data, error } = await getInsForgeAdminClient().database.rpc("update_task_assignee_progress", {
+    p_task_id: taskId,
+    p_employee_id: actor.employeeId,
+    p_status: input.status,
+    p_progress: input.progress,
+    p_blocked_reason: input.blockedReason,
+    p_actor_employee_id: actor.employeeId,
+    p_request_id: requestId,
+  });
+
+  if (error) throw error;
+  if (data !== true) return null;
+
+  return getAccessibleTask(actor, taskId);
 }
 
 export async function createPersonalTask(actor: CurrentActor, input: PersonalTaskInput): Promise<TaskDetail> {
