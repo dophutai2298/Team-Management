@@ -149,6 +149,14 @@ export function TasksTable({ tasks, onDelete, onEdit, onView }: TasksTableProps)
         },
       },
       {
+        accessorKey: "updatedAt",
+        header: t("tasks.updated"),
+        cell: ({ getValue }) => {
+          const updatedAt = getValue<string>();
+          return <span className="whitespace-nowrap text-sm text-muted">{dateFormatter.format(new Date(updatedAt))}</span>;
+        },
+      },
+      {
         id: "actions",
         enableGlobalFilter: false,
         enableSorting: false,
