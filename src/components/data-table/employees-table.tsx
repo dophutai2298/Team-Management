@@ -30,7 +30,7 @@ const paginationControlClassNames = {
   prev:
     "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
   next:
-    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
+    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none [&>svg]:rotate-180 data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
 } as const;
 
 type EmployeesTableProps = {

@@ -39,15 +39,25 @@ export function TaskWorkspace() {
   const { t } = useLocale();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [viewingTaskId, setViewingTaskId] = useState<string | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [progressTaskId, setProgressTaskId] = useState<string | null>(null);
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
   const tasksQuery = useQuery({ queryKey: ["tasks"], queryFn: () => fetchApi<TaskListPayload>("/api/tasks") });
-  const detailQuery = useQuery({
-    queryKey: ["tasks", selectedTaskId],
-    queryFn: () => fetchApi<TaskDetailPayload>(`/api/tasks/${selectedTaskId}`),
-    enabled: Boolean(selectedTaskId),
+  const viewingTaskQuery = useQuery({
+    queryKey: ["tasks", viewingTaskId],
+    queryFn: () => fetchApi<TaskDetailPayload>(`/api/tasks/${viewingTaskId}`),
+    enabled: Boolean(viewingTaskId),
+  });
+  const editingTaskQuery = useQuery({
+    queryKey: ["tasks", editingTaskId],
+    queryFn: () => fetchApi<TaskDetailPayload>(`/api/tasks/${editingTaskId}`),
+    enabled: Boolean(editingTaskId),
+  });
+  const progressTaskQuery = useQuery({
+    queryKey: ["tasks", progressTaskId],
+    queryFn: () => fetchApi<TaskDetailPayload>(`/api/tasks/${progressTaskId}`),
+    enabled: Boolean(progressTaskId),
   });
   const assignmentOptionsQuery = useQuery({
     queryKey: ["tasks", "assignment-options"],
@@ -62,7 +72,7 @@ export function TaskWorkspace() {
     mutationFn: ({ taskId, input }: { taskId: string; input: TaskFormInput }) => fetchApi<TaskDetailPayload>(`/api/tasks/${taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(isAssignedTaskInput(input) ? { ...input, taskType: "assigned" } : input) }),
     onSuccess: async (data) => {
       setEditingTaskId(null);
-      setSelectedTaskId(data.task.id);
+      setViewingTaskId(data.task.id);
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       await queryClient.invalidateQueries({ queryKey: ["tasks", data.task.id] });
     },
@@ -71,7 +81,7 @@ export function TaskWorkspace() {
     mutationFn: (taskId: string) => fetchApi<{ id: string }>(`/api/tasks/${taskId}`, { method: "DELETE" }),
     onSuccess: async () => {
       setDeleteTaskId(null);
-      setSelectedTaskId(null);
+      setViewingTaskId(null);
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
@@ -79,14 +89,25 @@ export function TaskWorkspace() {
     mutationFn: ({ taskId, employeeId, input }: { taskId: string; employeeId: string; input: AssignmentProgressInput }) => fetchApi<TaskDetailPayload>(`/api/tasks/${taskId}/assignees/${employeeId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) }),
     onSuccess: async (data) => {
       setProgressTaskId(null);
-      setSelectedTaskId(data.task.id);
+      setViewingTaskId(data.task.id);
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       await queryClient.invalidateQueries({ queryKey: ["tasks", data.task.id] });
     },
   });
   const tasks = tasksQuery.data?.tasks ?? [];
-  const detail = detailQuery.data?.task ?? null;
-  const isEditing = Boolean(editingTaskId);
+  const viewingTask = viewingTaskQuery.data?.task ?? null;
+  const editingTask = editingTaskQuery.data?.task ?? null;
+  const progressTask = progressTaskQuery.data?.task ?? null;
+
+  const openTaskEditor = (taskId: string) => {
+    setViewingTaskId(null);
+    setEditingTaskId(taskId);
+  };
+
+  const openTaskProgress = (taskId: string) => {
+    setViewingTaskId(null);
+    setProgressTaskId(taskId);
+  };
 
   return (
     <div className="mx-auto w-full max-w-[1320px]">
@@ -106,13 +127,13 @@ export function TaskWorkspace() {
           {tasksQuery.isPending ? <TaskSkeleton /> : null}
           {tasksQuery.isError ? <EmptyPanel action={<ActionButton color="primary" size="sm" onPress={() => void tasksQuery.refetch()}>{t("admin.retry")}</ActionButton>} description={errorMessage(tasksQuery.error, t("tasks.errorGeneric"))} icon={AlertCircle} title={t("tasks.loadError")} /> : null}
           {!tasksQuery.isPending && !tasksQuery.isError && tasks.length === 0 ? <EmptyPanel action={<ActionButton color="primary" startContent={<Plus aria-hidden size={16} />} onPress={() => setCreateOpen(true)}>{t("tasks.create")}</ActionButton>} description={t("tasks.emptyDescription")} icon={ClipboardList} title={t("tasks.emptyTitle")} /> : null}
-          {!tasksQuery.isPending && !tasksQuery.isError && tasks.length > 0 ? <div className="-mx-5 -mb-5 md:-mx-6 md:-mb-6"><TasksTable tasks={tasks} onDelete={setDeleteTaskId} onEdit={(taskId) => { setEditingTaskId(taskId); setSelectedTaskId(taskId); }} onView={setSelectedTaskId} /></div> : null}
+          {!tasksQuery.isPending && !tasksQuery.isError && tasks.length > 0 ? <div className="-mx-5 -mb-5 md:-mx-6 md:-mb-6"><TasksTable tasks={tasks} onDelete={setDeleteTaskId} onEdit={setEditingTaskId} onView={setViewingTaskId} /></div> : null}
         </WorkspacePanel>
       </section>
-      <TaskDetailModal error={detailQuery.isError ? errorMessage(detailQuery.error, t("tasks.errorGeneric")) : undefined} isLoading={detailQuery.isPending} isOpen={Boolean(selectedTaskId) && (!isEditing || detailQuery.isError) && !progressTaskId} task={detail} onClose={() => { setEditingTaskId(null); setProgressTaskId(null); setSelectedTaskId(null); }} onDelete={() => detail && setDeleteTaskId(detail.id)} onEdit={() => detail && setEditingTaskId(detail.id)} onUpdateProgress={() => detail && setProgressTaskId(detail.id)} />
+      <TaskDetailModal error={viewingTaskQuery.isError ? errorMessage(viewingTaskQuery.error, t("tasks.errorGeneric")) : undefined} isLoading={viewingTaskQuery.isPending} isOpen={Boolean(viewingTaskId)} task={viewingTask} onClose={() => setViewingTaskId(null)} onDelete={() => viewingTask && setDeleteTaskId(viewingTask.id)} onEdit={() => viewingTask && openTaskEditor(viewingTask.id)} onUpdateProgress={() => viewingTask && openTaskProgress(viewingTask.id)} />
       <TaskFormModal assignmentOptions={assignmentOptionsQuery.data ?? null} error={createMutation.isError ? errorMessage(createMutation.error, t("tasks.errorGeneric")) : undefined} isAssignmentOptionsLoading={assignmentOptionsQuery.isPending} isOpen={createOpen} isSubmitting={createMutation.isPending} task={null} onClose={() => setCreateOpen(false)} onSubmit={(input) => createMutation.mutate(input)} />
-      <TaskFormModal assignmentOptions={assignmentOptionsQuery.data ?? null} error={updateMutation.isError ? errorMessage(updateMutation.error, t("tasks.errorGeneric")) : undefined} isAssignmentOptionsLoading={assignmentOptionsQuery.isPending} isOpen={isEditing && Boolean(detail)} isSubmitting={updateMutation.isPending} task={detail} onClose={() => setEditingTaskId(null)} onSubmit={(input) => editingTaskId && updateMutation.mutate({ taskId: editingTaskId, input })} />
-      <TaskProgressModal error={progressMutation.isError ? errorMessage(progressMutation.error, t("tasks.errorGeneric")) : undefined} isOpen={Boolean(progressTaskId) && Boolean(detail?.ownAssignee)} isSubmitting={progressMutation.isPending} task={detail} onClose={() => setProgressTaskId(null)} onSubmit={(input) => detail?.ownAssignee && progressTaskId && progressMutation.mutate({ taskId: progressTaskId, employeeId: detail.ownAssignee.employeeId, input })} />
+      <TaskFormModal assignmentOptions={assignmentOptionsQuery.data ?? null} error={updateMutation.isError ? errorMessage(updateMutation.error, t("tasks.errorGeneric")) : undefined} isAssignmentOptionsLoading={assignmentOptionsQuery.isPending} isOpen={Boolean(editingTaskId && editingTask)} isSubmitting={updateMutation.isPending} task={editingTask} onClose={() => setEditingTaskId(null)} onSubmit={(input) => editingTaskId && updateMutation.mutate({ taskId: editingTaskId, input })} />
+      <TaskProgressModal error={progressMutation.isError ? errorMessage(progressMutation.error, t("tasks.errorGeneric")) : undefined} isOpen={Boolean(progressTaskId) && Boolean(progressTask?.ownAssignee)} isSubmitting={progressMutation.isPending} task={progressTask} onClose={() => setProgressTaskId(null)} onSubmit={(input) => progressTask?.ownAssignee && progressTaskId && progressMutation.mutate({ taskId: progressTaskId, employeeId: progressTask.ownAssignee.employeeId, input })} />
       <AppModal isOpen={Boolean(deleteTaskId)} size="md" onOpenChange={(open) => !open && !deleteMutation.isPending && setDeleteTaskId(null)}>
         <ModalContent><ModalHeader className="border-b border-line px-5 py-4 pr-16 text-base font-bold text-ink">{t("tasks.deleteTitle")}</ModalHeader><ModalBody className="bg-slate-50/70 px-5 py-5 text-sm leading-6 text-muted dark:bg-white/[0.03]">{t("tasks.deleteDescription")}{deleteMutation.isError ? <p className="mt-3 text-danger">{errorMessage(deleteMutation.error, t("tasks.errorGeneric"))}</p> : null}</ModalBody><ModalFooter className="border-t border-line bg-panel px-5 py-4"><ActionButton isDisabled={deleteMutation.isPending} variant="light" onPress={() => setDeleteTaskId(null)}>{t("admin.cancel")}</ActionButton><ActionButton color="danger" isLoading={deleteMutation.isPending} onPress={() => deleteTaskId && deleteMutation.mutate(deleteTaskId)}>{t("tasks.delete")}</ActionButton></ModalFooter></ModalContent>
       </AppModal>

@@ -112,6 +112,7 @@ const englishMessages = {
   "validation.invalidEmail": "Enter a valid email address.",
   "validation.passwordLength": "Password must contain at least 6 characters.",
   "validation.otpLength": "Enter the 6-digit verification code.",
+  "form.noMatchingOptions": "No matching options.",
   "admin.eyebrow": "Administration",
   "admin.title": "Account approvals",
   "admin.description": "Review verified access requests and complete each employee's initial organization setup.",
@@ -329,6 +330,7 @@ const englishMessages = {
 export type MessageKey = keyof typeof englishMessages;
 
 const vietnameseMessages: Partial<Record<MessageKey, string>> = {
+  "form.noMatchingOptions": "Không có lựa chọn phù hợp.",
   "auth.accessFlow": "Quy trình truy cập có kiểm soát",
   "auth.accessFlowDescription": "Mỗi tài khoản công việc đều được xác minh và quản trị viên kiểm duyệt.",
   "auth.stepVerify": "Xác minh email",

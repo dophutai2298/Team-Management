@@ -1,11 +1,11 @@
 "use client";
 
-import { Select, SelectItem, Skeleton } from "@heroui/react";
+import { Skeleton } from "@heroui/react";
 import { Users } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 
-import { selectFieldClassNames, selectPopoverClassNames } from "@/components/heroui/field-styles";
+import { SearchableSelect } from "@/components/heroui/controlled-fields";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import {
   buildTeamOrganizationChart,
@@ -45,26 +45,18 @@ export function OrganizationChart({
   return (
     <div key={selectedTeamId} className="min-w-0">
       <div className="border-b border-line bg-slate-50/80 px-5 py-4 dark:bg-white/[0.03] md:px-6">
-        <Select
-          aria-label={t("organization.chartTeamLabel")}
-          className="w-full sm:max-w-[300px]"
-          classNames={{
-            ...selectFieldClassNames,
-            trigger:
-              "relative h-10 min-h-10 rounded-lg border border-line !bg-panel px-3 pr-10 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] data-[focus-visible=true]:outline-none dark:data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
-          }}
-          popoverProps={{ classNames: selectPopoverClassNames }}
-          selectedKeys={[selectedTeamId]}
-          size="sm"
-          variant="bordered"
-          onChange={(event) => onSelectedTeamChange(event.target.value)}
-        >
-          {teams.map((team) => (
-            <SelectItem key={team.id} textValue={team.name}>
-              {team.name}
-            </SelectItem>
-          ))}
-        </Select>
+        <div className="w-full sm:max-w-[300px]">
+          <SearchableSelect
+            ariaLabel={t("organization.chartTeamLabel")}
+            compact
+            options={teams.map((team) => ({ id: team.id, name: team.name }))}
+            placeholder={t("organization.chartTeamLabel")}
+            selectedKey={selectedTeamId}
+            onSelectionChange={(key) => {
+              if (key !== null) onSelectedTeamChange(String(key));
+            }}
+          />
+        </div>
       </div>
 
       {renderChart ? (

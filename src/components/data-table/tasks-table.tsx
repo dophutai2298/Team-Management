@@ -27,7 +27,7 @@ const paginationClassNames = {
   item: "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-xs font-semibold text-ink shadow-none",
   cursor: "h-8 min-h-8 w-8 min-w-8 rounded-lg bg-primary text-white shadow-none",
   prev: "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none",
-  next: "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none",
+  next: "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none [&>svg]:rotate-180",
 } as const;
 
 type TasksTableProps = {
