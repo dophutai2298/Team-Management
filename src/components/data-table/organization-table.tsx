@@ -19,6 +19,7 @@ import { useMemo, useState } from "react";
 
 import { selectFieldClassNames, selectPopoverClassNames } from "@/components/heroui/field-styles";
 import { ActionButton } from "@/components/heroui/action-button";
+import { SearchableSelect } from "@/components/heroui/controlled-fields";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import {
   buildReportingTableRows,
@@ -41,7 +42,7 @@ const paginationControlClassNames = {
   prev:
     "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
   next:
-    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
+    "h-8 min-h-8 w-8 min-w-8 rounded-lg border border-line bg-panel text-ink shadow-none [&>svg]:rotate-180 data-[hover=true]:border-primary/45 data-[hover=true]:bg-primary/5",
 } as const;
 
 export function OrganizationTable({ employees, teams, onOpenTeamChart }: OrganizationTableProps) {
@@ -194,30 +195,17 @@ export function OrganizationTable({ employees, teams, onOpenTeamChart }: Organiz
           variant="bordered"
           onValueChange={setGlobalFilter}
         />
-        <Select
-          aria-label={t("organization.teamFilter")}
-          classNames={{
-            ...selectFieldClassNames,
-            trigger:
-              "relative h-10 min-h-10 rounded-lg border border-line !bg-panel px-3 pr-10 shadow-none outline-none data-[focus=true]:border-primary data-[focus=true]:shadow-[0_0_0_3px_rgb(79_70_229_/_0.16)] data-[focus-visible=true]:outline-none dark:data-[focus=true]:shadow-[0_0_0_3px_rgb(129_140_248_/_0.2)]",
-          }}
+        <SearchableSelect
+          ariaLabel={t("organization.teamFilter")}
+          compact
           placeholder={t("organization.allTeams")}
-          popoverProps={{ classNames: selectPopoverClassNames }}
-          radius="lg"
-          selectedKeys={[teamFilter ? String(teamFilter) : "all"]}
-          size="sm"
-          variant="bordered"
-          onChange={(event) => {
-            const value = event.target.value;
+          options={teamFilterOptions}
+          selectedKey={teamFilter ? String(teamFilter) : "all"}
+          onSelectionChange={(key) => {
+            const value = String(key ?? "all");
             table.getColumn("primaryTeamName")?.setFilterValue(value === "all" ? undefined : value);
           }}
-        >
-          {teamFilterOptions.map((team) => (
-            <SelectItem key={team.id} textValue={team.name}>
-              {team.name}
-            </SelectItem>
-          ))}
-        </Select>
+        />
         <ActionButton
           className="h-10 px-3 text-sm"
           isDisabled={!hasFilters}
