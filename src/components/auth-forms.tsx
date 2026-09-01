@@ -15,6 +15,7 @@ import type { MessageKey } from "@/lib/i18n/messages";
 
 import { AuthBackLink, AuthShell } from "./auth-shell";
 import { ActionButton } from "./heroui/action-button";
+import { showSuccessToast } from "./heroui/app-toast";
 import { ControlledTextField } from "./heroui/controlled-fields";
 import { FormError } from "./heroui/form-error";
 
@@ -68,8 +69,9 @@ export function SignInForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...values, returnTo: getSafeInternalPath(searchParams.get("returnTo")) }),
-      }),
+    }),
     onSuccess: (result) => {
+      showSuccessToast(t("auth.toastSignedIn"));
       queryClient.clear();
       router.replace(result.next);
       router.refresh();
@@ -109,7 +111,10 @@ export function RegistrationForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       }),
-    onSuccess: (result, values) => router.push(`${result.next}?email=${encodeURIComponent(result.email ?? values.email)}`),
+    onSuccess: (result, values) => {
+      showSuccessToast(t("auth.toastRegistered"));
+      router.push(`${result.next}?email=${encodeURIComponent(result.email ?? values.email)}`);
+    },
   });
 
   return (
@@ -148,7 +153,10 @@ export function VerifyEmailForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       }),
-    onSuccess: (result) => router.replace(result.next),
+    onSuccess: (result) => {
+      showSuccessToast(t("auth.toastVerified"));
+      router.replace(result.next);
+    },
   });
 
   return (

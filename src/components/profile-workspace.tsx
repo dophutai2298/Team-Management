@@ -13,6 +13,7 @@ import type { EmployeeProfile, EmployeeProfileInput } from "@/lib/employee/profi
 import { useLocale } from "@/lib/i18n/locale-provider";
 
 import { ActionButton } from "./heroui/action-button";
+import { showSuccessToast } from "./heroui/app-toast";
 import { ControlledSelectField, ControlledTextField } from "./heroui/controlled-fields";
 import { FormError } from "./heroui/form-error";
 import { EmptyPanel } from "./workspace/empty-panel";
@@ -99,9 +100,10 @@ export function ProfileWorkspace() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
-      }),
+    }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["profile", "self"] });
+      showSuccessToast(t("profile.toastSaved"));
     },
   });
   const profile = profileQuery.data?.profile;

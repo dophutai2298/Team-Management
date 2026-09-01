@@ -20,9 +20,10 @@ import { fetchApi } from "@/lib/api/client";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import type { MessageKey } from "@/lib/i18n/messages";
 
+import { ActionButton } from "./heroui/action-button";
+import { showSuccessToast } from "./heroui/app-toast";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeToggle } from "./theme-toggle";
-import { ActionButton } from "./heroui/action-button";
 
 type AccessStatusProps = {
   kind: "pending" | "blocked";
@@ -120,6 +121,7 @@ export function AccessStatus({ kind }: AccessStatusProps) {
   const signOut = useMutation({
     mutationFn: () => fetchApi<{ next: string }>("/api/auth/sign-out", { method: "POST" }),
     onSuccess: (result) => {
+      showSuccessToast(t("auth.toastSignedOut"));
       queryClient.clear();
       router.replace(result.next);
       router.refresh();
