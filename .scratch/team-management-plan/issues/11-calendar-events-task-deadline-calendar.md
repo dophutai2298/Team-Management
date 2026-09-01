@@ -6,6 +6,14 @@
 
 **Status:** ready-for-agent
 
+- [ ] Use Mobiscroll React Eventcalendar as the primary calendar UI.
+- [ ] Use the Mobiscroll Month / Week Eventcalendar pattern for normal calendar browsing.
+- [ ] Support at minimum:
+  - Month view
+  - Week view
+  - Team Schedule / hierarchy view
+- [ ] Users can switch between Month, Week, and Team Schedule without leaving the Calendar page.
+- [ ] Preserve the selected date and filters when switching views where practical.
 - [ ] Users can create and view private calendar events.
 - [ ] Permitted users can create and view team calendar events.
 - [ ] Calendar events can optionally link to tasks.

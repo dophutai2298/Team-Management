@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardBody, Chip } from "@heroui/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -20,9 +20,10 @@ import { fetchApi } from "@/lib/api/client";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import type { MessageKey } from "@/lib/i18n/messages";
 
+import { ActionButton } from "./heroui/action-button";
+import { showSuccessToast } from "./heroui/app-toast";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeToggle } from "./theme-toggle";
-import { ActionButton } from "./heroui/action-button";
 
 type AccessStatusProps = {
   kind: "pending" | "blocked";
@@ -115,10 +116,16 @@ export function AuthShell({
 
 export function AccessStatus({ kind }: AccessStatusProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { t } = useLocale();
   const signOut = useMutation({
     mutationFn: () => fetchApi<{ next: string }>("/api/auth/sign-out", { method: "POST" }),
-    onSuccess: (result) => router.replace(result.next),
+    onSuccess: (result) => {
+      showSuccessToast(t("auth.toastSignedOut"));
+      queryClient.clear();
+      router.replace(result.next);
+      router.refresh();
+    },
   });
   const isPending = kind === "pending";
 

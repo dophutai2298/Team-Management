@@ -15,12 +15,15 @@ export class ApiClientError extends Error {
 }
 
 export async function fetchApi<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
+  const { headers, ...requestInit } = init ?? {};
+  const requestHeaders = new Headers(headers);
+
+  requestHeaders.set("Accept", "application/json");
+
   const response = await fetch(input, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...init?.headers,
-    },
+    cache: "no-store",
+    ...requestInit,
+    headers: requestHeaders,
   });
 
   let payload: ApiResponse<T>;

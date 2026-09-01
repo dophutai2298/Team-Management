@@ -19,6 +19,7 @@ import { AccountApprovalModal } from "./admin/account-approval-modal";
 import { AccountRejectionModal } from "./admin/account-rejection-modal";
 import { PendingAccountsTable } from "./data-table/pending-accounts-table";
 import { ActionButton } from "./heroui/action-button";
+import { showSuccessToast } from "./heroui/app-toast";
 import { EmptyPanel } from "./workspace/empty-panel";
 import { PageHeader } from "./workspace/page-header";
 import { WorkspacePanel } from "./workspace/workspace-panel";
@@ -82,6 +83,7 @@ export function AdminApprovalWorkspace() {
         queryClient.invalidateQueries({ queryKey: ["admin", "pending-accounts"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "approval-options"] }),
       ]);
+      showSuccessToast(t("admin.toastApproved"));
     },
   });
   const rejectMutation = useMutation({
@@ -94,6 +96,7 @@ export function AdminApprovalWorkspace() {
     onSuccess: async () => {
       setRejectionTarget(null);
       await queryClient.invalidateQueries({ queryKey: ["admin", "pending-accounts"] });
+      showSuccessToast(t("admin.toastRejected"));
     },
   });
 

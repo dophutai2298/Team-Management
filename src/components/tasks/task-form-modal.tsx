@@ -50,8 +50,10 @@ type TaskFormModalProps = {
   assignmentOptions: TaskAssignmentOptions | null;
   error?: string;
   isAssignmentOptionsLoading?: boolean;
+  isLoading?: boolean;
   isOpen: boolean;
   isSubmitting: boolean;
+  mode?: "create" | "edit";
   task: TaskDetail | null;
   onClose: () => void;
   onSubmit: (input: TaskFormInput) => void;
@@ -74,8 +76,10 @@ export function TaskFormModal({
   assignmentOptions,
   error,
   isAssignmentOptionsLoading,
+  isLoading,
   isOpen,
   isSubmitting,
+  mode = "create",
   task,
   onClose,
   onSubmit,
@@ -85,8 +89,14 @@ export function TaskFormModal({
   const taskType = useWatch({ control: form.control, name: "taskType" });
   const isAssignedTask = taskType === "assigned";
   const canChooseAssignedTask = Boolean(assignmentOptions?.canAssign);
+  const isEditMode = mode === "edit";
+  const canShowForm = !isLoading && (!isEditMode || Boolean(task));
 
-  useEffect(() => form.reset(defaultValues(task)), [form, task]);
+  useEffect(() => {
+    if (isOpen) {
+      form.reset(defaultValues(task));
+    }
+  }, [form, isOpen, task]);
 
   const employeeOptions = (assignmentOptions?.employees ?? []).map((employee) => ({
     id: employee.id,
@@ -135,7 +145,7 @@ export function TaskFormModal({
             </span>
             <span className="min-w-0">
               <span className="block text-base font-bold leading-6 text-ink">
-                {task ? (isAssignedTask ? t("tasks.editAssignedTitle") : t("tasks.editTitle")) : (isAssignedTask ? t("tasks.newAssignedTitle") : t("tasks.newTitle"))}
+                {isEditMode ? (isAssignedTask ? t("tasks.editAssignedTitle") : t("tasks.editTitle")) : (isAssignedTask ? t("tasks.newAssignedTitle") : t("tasks.newTitle"))}
               </span>
               <span className="mt-0.5 block text-xs font-normal leading-5 text-muted">
                 {isAssignedTask ? t("tasks.assignedFormDescription") : t("tasks.formDescription")}
@@ -143,7 +153,8 @@ export function TaskFormModal({
             </span>
           </ModalHeader>
           <ModalBody className="max-h-[calc(92dvh-9rem)] overflow-y-auto bg-slate-50/70 px-5 pb-7 pt-5 dark:bg-white/[0.03]">
-            {!task ? (
+            {isLoading ? <p className="text-sm text-muted">{t("loading.label")}</p> : null}
+            {canShowForm && !isEditMode ? (
               <Tabs
                 aria-label={t("tasks.assignmentMode")}
                 classNames={{ tabList: "w-full rounded-lg bg-panel p-1", tab: "h-9 text-sm", cursor: "rounded-md bg-primary" }}
@@ -155,7 +166,7 @@ export function TaskFormModal({
                 <Tab isDisabled={!canChooseAssignedTask} key="assigned" title={t("tasks.assignedMode")} />
               </Tabs>
             ) : null}
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {canShowForm ? <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <ControlledTextField isRequired control={form.control} label={t("tasks.taskTitle")} name="title" placeholder={t("tasks.taskTitlePlaceholder")} />
               </div>
@@ -211,12 +222,12 @@ export function TaskFormModal({
               <div className="sm:col-span-2">
                 <ControlledTextareaField control={form.control} label={t("tasks.descriptionLabel")} maxLength={2_000} name="description" placeholder={t("tasks.descriptionPlaceholder")} />
               </div>
-            </div>
+            </div> : null}
             {error ? <FormError>{error}</FormError> : null}
           </ModalBody>
           <ModalFooter className="shrink-0 border-t border-line bg-panel px-5 py-4">
             <ActionButton isDisabled={isSubmitting} variant="light" onPress={onClose}>{t("admin.cancel")}</ActionButton>
-            <ActionButton color="primary" isDisabled={isAssignedTask && (isAssignmentOptionsLoading || !canChooseAssignedTask)} isLoading={isSubmitting} startContent={<Save aria-hidden size={16} />} type="submit">{t("tasks.save")}</ActionButton>
+            <ActionButton color="primary" isDisabled={!canShowForm || (isAssignedTask && (isAssignmentOptionsLoading || !canChooseAssignedTask))} isLoading={isSubmitting} startContent={<Save aria-hidden size={16} />} type="submit">{t("tasks.save")}</ActionButton>
           </ModalFooter>
         </form>
       </ModalContent>

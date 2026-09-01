@@ -12,6 +12,7 @@ import { AppModal } from "@/components/heroui/app-modal";
 import { ControlledSelectField, ControlledTextField, ControlledTextareaField } from "@/components/heroui/controlled-fields";
 import { FormError } from "@/components/heroui/form-error";
 import { useLocale } from "@/lib/i18n/locale-provider";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { AssignmentProgressInput, TaskDetail, TaskStatus } from "@/lib/task/task";
 
 const progressSchema = z
@@ -47,12 +48,28 @@ function defaultValues(task: TaskDetail | null): ProgressValues {
   };
 }
 
+function statusKey(status: TaskStatus): MessageKey {
+  const keys: Record<TaskStatus, MessageKey> = {
+    todo: "tasks.todo",
+    in_progress: "tasks.inProgress",
+    blocked: "tasks.blocked",
+    done: "tasks.done",
+    cancelled: "tasks.cancelled",
+  };
+  return keys[status];
+}
+
 export function TaskProgressModal({ error, isOpen, isSubmitting, task, onClose, onSubmit }: TaskProgressModalProps) {
   const { t } = useLocale();
   const form = useForm<ProgressValues>({ resolver: zodResolver(progressSchema), defaultValues: defaultValues(task) });
   const status = useWatch({ control: form.control, name: "status" });
+  const current = task?.ownAssignee ?? null;
 
-  useEffect(() => form.reset(defaultValues(task)), [form, task]);
+  useEffect(() => {
+    if (isOpen) {
+      form.reset(defaultValues(task));
+    }
+  }, [form, isOpen, task]);
 
   return (
     <AppModal isOpen={isOpen} size="lg" onOpenChange={(open) => !open && !isSubmitting && onClose()}>
@@ -63,6 +80,17 @@ export function TaskProgressModal({ error, isOpen, isSubmitting, task, onClose, 
             <span className="min-w-0"><span className="block text-base font-bold leading-6 text-ink">{t("tasks.progressTitle")}</span><span className="mt-0.5 block truncate text-xs font-normal leading-5 text-muted">{task?.title ?? ""}</span></span>
           </ModalHeader>
           <ModalBody className="space-y-4 bg-slate-50/70 px-5 py-5 dark:bg-white/[0.03]">
+            {current ? (
+              <div className="rounded-lg border border-line bg-panel px-3.5 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t("tasks.currentProgress")}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
+                  <span>{t(statusKey(current.status))}</span>
+                  <span className="text-muted">/</span>
+                  <span>{current.progress}%</span>
+                </div>
+                {current.blockedReason ? <p className="mt-2 text-sm leading-6 text-muted">{current.blockedReason}</p> : null}
+              </div>
+            ) : null}
             <ControlledSelectField
               isRequired
               ariaLabel={t("tasks.status")}

@@ -13,6 +13,7 @@ import type { MessageKey } from "@/lib/i18n/messages";
 import { EmployeeEditModal } from "./admin/employee-edit-modal";
 import { EmployeesTable } from "./data-table/employees-table";
 import { ActionButton } from "./heroui/action-button";
+import { showSuccessToast } from "./heroui/app-toast";
 import { EmptyPanel } from "./workspace/empty-panel";
 import { PageHeader } from "./workspace/page-header";
 import { WorkspacePanel } from "./workspace/workspace-panel";
@@ -74,6 +75,7 @@ export function EmployeeManagementWorkspace() {
     onSuccess: async () => {
       setEditTarget(null);
       await queryClient.invalidateQueries({ queryKey: ["admin", "employees"] });
+      showSuccessToast(t("employees.toastUpdated"));
     },
   });
   const openEdit = useCallback(

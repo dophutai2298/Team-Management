@@ -13,7 +13,7 @@ import {
   type AssignedTaskInput,
   type PersonalTaskInput,
 } from "@/lib/task/task";
-import { deletePersonalTask, getAccessibleTask, updateAssignedTask, updatePersonalTask } from "@/lib/task/repository";
+import { deleteTask, getAccessibleTask, updateAssignedTask, updatePersonalTask } from "@/lib/task/repository";
 
 type RouteContext = { params: Promise<{ taskId: string }> };
 
@@ -101,7 +101,7 @@ export async function DELETE(
   if (!isTaskId(taskId)) return invalidTaskIdResponse<{ id: string }>();
 
   try {
-    const deleted = await deletePersonalTask(await requireTaskActor(), taskId);
+    const deleted = await deleteTask(await requireTaskActor(), taskId);
 
     return deleted ? NextResponse.json(apiSuccess({ id: taskId })) : taskNotFoundResponse<{ id: string }>();
   } catch (error) {

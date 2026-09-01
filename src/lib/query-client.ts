@@ -1,4 +1,5 @@
 import { isServer, QueryClient } from "@tanstack/react-query";
+import type { QueryKey } from "@tanstack/react-query";
 
 function createQueryClient() {
   return new QueryClient({
@@ -24,4 +25,8 @@ export function getQueryClient(): QueryClient {
 
   browserQueryClient ??= createQueryClient();
   return browserQueryClient;
+}
+
+export function createScopedQueryKey(actorCacheKey: string, ...parts: QueryKey): QueryKey {
+  return ["actor", actorCacheKey, ...parts];
 }

@@ -2,21 +2,31 @@ import "server-only";
 
 import type { CurrentActor } from "@/lib/auth/session";
 import { getInsForgeAdminClient } from "@/lib/insforge/admin";
+import { isOptionalTaskCollaborationSchemaError } from "@/lib/task/collaboration-errors";
 
 import {
+  canAddTaskAttachment,
   canDeleteAssignedTask,
   canAssignEmployee,
   canManageAssignment,
   canManagePersonalTask,
   canReadTask,
+  canRemoveTaskAttachment,
   canUpdateOwnAssignmentProgress,
   type AssignedTaskInput,
   type AssignmentProgressInput,
   type PersonalTaskInput,
+  TASK_ATTACHMENT_BUCKET,
   type TaskAssignmentEmployee,
   type TaskAssignmentOptions,
   type TaskAssignmentTeam,
   type TaskAssigneeSummary,
+  type TaskAttachment,
+  type TaskAttachmentUploadInput,
+  type TaskComment,
+  type TaskCommentInput,
+  type TaskActivity,
+  TaskAttachmentInputError,
   TaskAssignmentInputError,
   type TaskDetail,
   type TaskPriority,
@@ -74,8 +84,50 @@ type TaskRecord = TaskRow & {
   assignees: TaskAssigneeSummary[];
 };
 
+type TaskCommentRow = {
+  id: string;
+  author_employee_id: string;
+  body: string;
+  created_at: string;
+};
+
+type TaskAttachmentRow = {
+  id: string;
+  uploader_employee_id: string;
+  bucket_name: string;
+  storage_key: string;
+  file_name: string;
+  content_type: string;
+  file_size_bytes: number;
+  created_at: string;
+  removed_at: string | null;
+};
+
+type TaskAuditRow = {
+  id: string;
+  actor_employee_id: string | null;
+  action: string;
+  created_at: string;
+};
+
+type TaskCollaboration = {
+  comments: TaskComment[];
+  attachments: TaskAttachment[];
+  activity: TaskActivity[];
+};
+
 const taskColumns =
   "id, task_type, title, description, creator_employee_id, assigner_employee_id, team_id, priority, status, progress, due_date, updated_at";
+const taskCommentColumns = "id, author_employee_id, body, created_at";
+const taskAttachmentColumns =
+  "id, uploader_employee_id, bucket_name, storage_key, file_name, content_type, file_size_bytes, created_at, removed_at";
+const taskAuditColumns = "id, actor_employee_id, action, created_at";
+
+const emptyCollaboration: TaskCollaboration = {
+  comments: [],
+  attachments: [],
+  activity: [],
+};
 
 async function hydrateTasks(rows: TaskRow[]): Promise<TaskRecord[]> {
   if (rows.length === 0) {
@@ -127,7 +179,109 @@ async function hydrateTasks(rows: TaskRow[]): Promise<TaskRecord[]> {
   }));
 }
 
-function toTaskDetail(actor: CurrentActor, task: TaskRecord): TaskDetail {
+async function hydrateTaskCollaboration(actor: CurrentActor, task: TaskRecord): Promise<TaskCollaboration> {
+  const client = getInsForgeAdminClient();
+  let collaborationResults;
+
+  try {
+    collaborationResults = await Promise.all([
+      client.database
+        .from("task_comments")
+        .select(taskCommentColumns)
+        .eq("task_id", task.id)
+        .order("created_at", { ascending: true })
+        .limit(200),
+      client.database
+        .from("task_attachments")
+        .select(taskAttachmentColumns)
+        .eq("task_id", task.id)
+        .is("removed_at", null)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      client.database
+        .from("account_audit_events")
+        .select(taskAuditColumns)
+        .eq("resource", "task")
+        .eq("resource_id", task.id)
+        .order("created_at", { ascending: false })
+        .limit(100),
+    ]);
+  } catch (error) {
+    if (isOptionalTaskCollaborationSchemaError(error)) {
+      return emptyCollaboration;
+    }
+
+    return emptyCollaboration;
+  }
+  const collaborationError = collaborationResults.find((result) => result.error)?.error;
+
+  if (collaborationError) {
+    if (isOptionalTaskCollaborationSchemaError(collaborationError)) {
+      return emptyCollaboration;
+    }
+
+    return emptyCollaboration;
+  }
+
+  const [commentsResult, attachmentsResult, activityResult] = collaborationResults;
+
+  const commentRows = (commentsResult.data ?? []) as TaskCommentRow[];
+  const attachmentRows = (attachmentsResult.data ?? []) as TaskAttachmentRow[];
+  const activityRows = (activityResult.data ?? []) as TaskAuditRow[];
+  const employeeIds = [
+    ...new Set(
+      [
+        ...commentRows.map((comment) => comment.author_employee_id),
+        ...attachmentRows.map((attachment) => attachment.uploader_employee_id),
+        ...activityRows.map((activity) => activity.actor_employee_id).filter((id): id is string => Boolean(id)),
+      ],
+    ),
+  ];
+  const employeesResult = employeeIds.length
+    ? await client.database.from("employees").select("id, full_name, employee_code").in("id", employeeIds).limit(1_000)
+    : null;
+
+  if (employeesResult?.error) return emptyCollaboration;
+
+  const employeeNames = new Map(((employeesResult?.data ?? []) as EmployeeRow[]).map((employee) => [employee.id, employee.full_name]));
+  const target = {
+    taskType: task.task_type,
+    creatorEmployeeId: task.creator_employee_id,
+    teamId: task.team_id,
+    assigneeEmployeeIds: task.assignees.map((assignee) => assignee.employeeId),
+  } as const;
+
+  return {
+    comments: commentRows.map((comment) => ({
+      id: comment.id,
+      authorEmployeeId: comment.author_employee_id,
+      authorName: employeeNames.get(comment.author_employee_id) ?? "Unknown employee",
+      body: comment.body,
+      createdAt: comment.created_at,
+    })),
+    attachments: attachmentRows.map((attachment) => ({
+      id: attachment.id,
+      uploaderEmployeeId: attachment.uploader_employee_id,
+      uploaderName: employeeNames.get(attachment.uploader_employee_id) ?? "Unknown employee",
+      fileName: attachment.file_name,
+      contentType: attachment.content_type,
+      fileSizeBytes: attachment.file_size_bytes,
+      createdAt: attachment.created_at,
+      canRemove: canRemoveTaskAttachment(actor, target, attachment.uploader_employee_id),
+    })),
+    activity: activityRows.map((activity) => ({
+      id: activity.id,
+      actorEmployeeId: activity.actor_employee_id,
+      actorName: activity.actor_employee_id
+        ? employeeNames.get(activity.actor_employee_id) ?? "Unknown employee"
+        : "System",
+      action: activity.action,
+      createdAt: activity.created_at,
+    })),
+  };
+}
+
+function toTaskDetail(actor: CurrentActor, task: TaskRecord, collaboration: TaskCollaboration = emptyCollaboration): TaskDetail {
   const target = {
     taskType: task.task_type,
     creatorEmployeeId: task.creator_employee_id,
@@ -164,6 +318,9 @@ function toTaskDetail(actor: CurrentActor, task: TaskRecord): TaskDetail {
     updatedAt: task.updated_at,
     assignees: task.assignees,
     ownAssignee: task.assignees.find((assignee) => assignee.employeeId === actor.employeeId) ?? null,
+    comments: collaboration.comments,
+    attachments: collaboration.attachments,
+    activity: collaboration.activity,
     canEdit: canManageTask,
     canDelete: canDeleteTask,
     canManageAssignment: task.task_type === "assigned" && canManageTask,
@@ -247,7 +404,9 @@ export async function getAccessibleTask(actor: CurrentActor, taskId: string): Pr
     assigneeEmployeeIds: task.assignees.map((assignee) => assignee.employeeId),
   } as const;
 
-  return canReadTask(actor, target) ? toTaskDetail(actor, task) : null;
+  if (!canReadTask(actor, target)) return null;
+
+  return toTaskDetail(actor, task, await hydrateTaskCollaboration(actor, task));
 }
 
 export async function getTaskAssignmentOptions(actor: CurrentActor): Promise<TaskAssignmentOptions> {
@@ -421,6 +580,207 @@ export async function updateOwnAssignmentProgress(
   return getAccessibleTask(actor, taskId);
 }
 
+function sanitizeStorageFileName(fileName: string): string {
+  const extension = fileName.includes(".") ? `.${fileName.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "";
+  const baseName = fileName
+    .replace(/\.[^.]*$/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
+  return `${baseName || "attachment"}${extension}`;
+}
+
+function taskAttachmentKey(taskId: string, attachmentId: string, fileName: string): string {
+  return `tasks/${taskId}/${attachmentId}-${sanitizeStorageFileName(fileName)}`;
+}
+
+async function insertTaskAuditEvent(
+  actor: CurrentActor & { employeeId: string },
+  action: string,
+  taskId: string,
+  afterData: Record<string, unknown>,
+  requestId: string,
+): Promise<void> {
+  const { error } = await getInsForgeAdminClient().database.from("account_audit_events").insert([
+    {
+      actor_type: "user",
+      actor_employee_id: actor.employeeId,
+      action,
+      resource: "task",
+      resource_id: taskId,
+      after_data: afterData,
+      request_id: requestId,
+    },
+  ]);
+
+  if (error) throw error;
+}
+
+export async function createTaskComment(
+  actor: CurrentActor & { employeeId: string },
+  taskId: string,
+  input: TaskCommentInput,
+  requestId: string,
+): Promise<TaskDetail | null> {
+  const task = await getAccessibleTask(actor, taskId);
+  if (!task) return null;
+
+  const client = getInsForgeAdminClient();
+  const { error } = await client.database.from("task_comments").insert([
+    {
+      task_id: taskId,
+      author_employee_id: actor.employeeId,
+      body: input.body,
+    },
+  ]);
+
+  if (error) throw error;
+
+  await insertTaskAuditEvent(actor, "task.comment_created", taskId, { bodyLength: input.body.length }, requestId);
+
+  return getAccessibleTask(actor, taskId);
+}
+
+export async function createTaskAttachment(
+  actor: CurrentActor & { employeeId: string },
+  taskId: string,
+  file: File | Blob,
+  input: TaskAttachmentUploadInput,
+  requestId: string,
+): Promise<TaskDetail | null> {
+  const task = await getAccessibleTask(actor, taskId);
+  if (!task) return null;
+  if (!canAddTaskAttachment(task.attachments.length)) {
+    throw new TaskAttachmentInputError("Each task can have up to 5 attachments.");
+  }
+
+  const client = getInsForgeAdminClient();
+  const attachmentId = crypto.randomUUID();
+  const storageKey = taskAttachmentKey(taskId, attachmentId, input.fileName);
+  const uploadFile =
+    file.type === input.contentType ? file : new Blob([await file.arrayBuffer()], { type: input.contentType });
+  const uploadResult = await client.storage.from(TASK_ATTACHMENT_BUCKET).upload(storageKey, uploadFile);
+
+  if (uploadResult.error) throw uploadResult.error;
+
+  const { error } = await client.database.from("task_attachments").insert([
+    {
+      id: attachmentId,
+      task_id: taskId,
+      uploader_employee_id: actor.employeeId,
+      bucket_name: TASK_ATTACHMENT_BUCKET,
+      storage_key: storageKey,
+      storage_url: uploadResult.data?.url ?? null,
+      file_name: input.fileName,
+      content_type: input.contentType,
+      file_size_bytes: input.fileSizeBytes,
+    },
+  ]);
+
+  if (error) {
+    try {
+      await client.storage.from(TASK_ATTACHMENT_BUCKET).remove(storageKey);
+    } catch {
+      // Preserve the metadata insert failure; cleanup can be retried from storage tooling if needed.
+    }
+    throw error;
+  }
+
+  await insertTaskAuditEvent(
+    actor,
+    "task.attachment_uploaded",
+    taskId,
+    { attachmentId, fileName: input.fileName, fileSizeBytes: input.fileSizeBytes },
+    requestId,
+  );
+
+  return getAccessibleTask(actor, taskId);
+}
+
+export async function downloadTaskAttachment(
+  actor: CurrentActor & { employeeId: string },
+  taskId: string,
+  attachmentId: string,
+): Promise<{ attachment: TaskAttachmentRow; blob: Blob } | null> {
+  const task = await getAccessibleTask(actor, taskId);
+  if (!task) return null;
+
+  const client = getInsForgeAdminClient();
+  const { data, error } = await client.database
+    .from("task_attachments")
+    .select(taskAttachmentColumns)
+    .eq("id", attachmentId)
+    .eq("task_id", taskId)
+    .is("removed_at", null)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const attachment = data as TaskAttachmentRow;
+  const downloadResult = await client.storage.from(attachment.bucket_name).download(attachment.storage_key);
+  if (downloadResult.error) throw downloadResult.error;
+  if (!downloadResult.data) return null;
+
+  return { attachment, blob: downloadResult.data };
+}
+
+export async function removeTaskAttachment(
+  actor: CurrentActor & { employeeId: string },
+  taskId: string,
+  attachmentId: string,
+  requestId: string,
+): Promise<TaskDetail | null> {
+  const task = await getAccessibleTask(actor, taskId);
+  if (!task) return null;
+
+  const client = getInsForgeAdminClient();
+  const { data, error } = await client.database
+    .from("task_attachments")
+    .select(taskAttachmentColumns)
+    .eq("id", attachmentId)
+    .eq("task_id", taskId)
+    .is("removed_at", null)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const attachment = data as TaskAttachmentRow;
+  const target = {
+    taskType: task.taskType,
+    creatorEmployeeId: task.creatorEmployeeId,
+    teamId: task.teamId,
+    assigneeEmployeeIds: task.assigneeEmployeeIds,
+  } as const;
+
+  if (!canRemoveTaskAttachment(actor, target, attachment.uploader_employee_id)) {
+    return null;
+  }
+
+  const removeResult = await client.storage.from(attachment.bucket_name).remove(attachment.storage_key);
+  if (removeResult.error) throw removeResult.error;
+
+  const updateResult = await client.database
+    .from("task_attachments")
+    .update({ removed_at: new Date().toISOString(), removed_by_employee_id: actor.employeeId })
+    .eq("id", attachmentId);
+
+  if (updateResult.error) throw updateResult.error;
+
+  await insertTaskAuditEvent(
+    actor,
+    "task.attachment_removed",
+    taskId,
+    { attachmentId, fileName: attachment.file_name },
+    requestId,
+  );
+
+  return getAccessibleTask(actor, taskId);
+}
+
 export async function createPersonalTask(actor: CurrentActor, input: PersonalTaskInput): Promise<TaskDetail> {
   const { data, error } = await getInsForgeAdminClient().database
     .from("tasks")
@@ -471,10 +831,55 @@ export async function updatePersonalTask(
   return getAccessibleTask(actor, taskId);
 }
 
-export async function deletePersonalTask(actor: CurrentActor, taskId: string): Promise<boolean> {
+async function listTaskAttachmentStorageObjects(taskId: string): Promise<Pick<TaskAttachmentRow, "bucket_name" | "storage_key">[]> {
+  const { data, error } = await getInsForgeAdminClient().database
+    .from("task_attachments")
+    .select("bucket_name, storage_key")
+    .eq("task_id", taskId)
+    .is("removed_at", null)
+    .limit(500);
+
+  if (error) {
+    if (isOptionalTaskCollaborationSchemaError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+
+  return (data ?? []) as Pick<TaskAttachmentRow, "bucket_name" | "storage_key">[];
+}
+
+async function removeTaskAttachmentObjects(taskId: string): Promise<void> {
+  const attachments = await listTaskAttachmentStorageObjects(taskId);
+  const storageKeysByBucket = new Map<string, string[]>();
+
+  for (const attachment of attachments) {
+    storageKeysByBucket.set(attachment.bucket_name, [
+      ...(storageKeysByBucket.get(attachment.bucket_name) ?? []),
+      attachment.storage_key,
+    ]);
+  }
+
+  await Promise.all(
+    [...storageKeysByBucket.entries()].map(async ([bucketName, storageKeys]) => {
+      if (storageKeys.length === 0) return;
+
+      try {
+        await getInsForgeAdminClient().storage.from(bucketName).remove(storageKeys);
+      } catch {
+        // Do not block task deletion if an attachment object was already removed outside the app.
+      }
+    }),
+  );
+}
+
+export async function deleteTask(actor: CurrentActor, taskId: string): Promise<boolean> {
   const task = await getAccessibleTask(actor, taskId);
 
   if (!task || !task.canDelete) return false;
+
+  await removeTaskAttachmentObjects(taskId);
 
   const { error } = await getInsForgeAdminClient().database.from("tasks").delete().eq("id", taskId);
 
@@ -482,3 +887,5 @@ export async function deletePersonalTask(actor: CurrentActor, taskId: string): P
 
   return true;
 }
+
+export const deletePersonalTask = deleteTask;

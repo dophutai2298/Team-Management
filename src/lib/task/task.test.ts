@@ -4,11 +4,18 @@ import type { AuthorizationActor } from "@/lib/authorization/authorization";
 
 import {
   canAccessTaskWorkspace,
+  canAddTaskAttachment,
   canAssignEmployee,
   canManagePersonalTask,
+  canRemoveTaskAttachment,
   canReadTask,
   canUpdateOwnAssignmentProgress,
   isTaskId,
+  validateTaskAttachmentUploadInput,
+  TASK_ATTACHMENT_IMAGE_MAX_BYTES,
+  TASK_ATTACHMENT_MAX_FILES,
+  TASK_ATTACHMENT_MAX_BYTES,
+  validateTaskCommentInput,
   validateAssignedTaskInput,
   validatePersonalTaskInput,
 } from "./task";
@@ -157,7 +164,7 @@ describe("task workspace access", () => {
     expect(canUpdateOwnAssignmentProgress({ ...actor, employeeId: "report", permissions: ["task:update:self"] }, "manager")).toBe(false);
   });
 
-  it("lets a system-wide task administrator manage personal tasks", () => {
+  it("keeps personal tasks private even from system-wide task administrators", () => {
     const personalTask = {
       taskType: "personal" as const,
       creatorEmployeeId: "report",
@@ -167,7 +174,88 @@ describe("task workspace access", () => {
 
     const admin = { ...actor, permissions: ["task:read:all", "task:update:all"] as const };
 
-    expect(canReadTask(admin, personalTask)).toBe(true);
-    expect(canManagePersonalTask(admin, "update", personalTask)).toBe(true);
+    expect(canReadTask(admin, personalTask)).toBe(false);
+    expect(canManagePersonalTask(admin, "update", personalTask)).toBe(false);
+  });
+
+  it("allows uploaders and task managers to remove attachments", () => {
+    const assignedTask = {
+      taskType: "assigned" as const,
+      creatorEmployeeId: "manager",
+      teamId: "platform",
+      assigneeEmployeeIds: ["report"],
+    };
+
+    expect(canRemoveTaskAttachment({ ...actor, employeeId: "report" }, assignedTask, "report")).toBe(true);
+    expect(canRemoveTaskAttachment({ ...actor, permissions: ["task:update:subtree"] }, assignedTask, "report")).toBe(true);
+    expect(canRemoveTaskAttachment({ ...actor, employeeId: "peer", permissions: ["task:update:self"] }, assignedTask, "report")).toBe(false);
+  });
+});
+
+describe("task collaboration input", () => {
+  it("normalizes comments and enforces useful body limits", () => {
+    expect(validateTaskCommentInput({ body: "  Ready for review. " })).toEqual({
+      ok: true,
+      value: { body: "Ready for review." },
+    });
+    expect(validateTaskCommentInput({ body: " " })).toEqual({ ok: false, code: "INVALID_TASK_COMMENT" });
+  });
+
+  it("accepts configured attachment types within size limits", () => {
+    expect(
+      validateTaskAttachmentUploadInput({
+        contentType: "APPLICATION/PDF",
+        fileName: "plan.pdf",
+        fileSizeBytes: TASK_ATTACHMENT_MAX_BYTES,
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        contentType: "application/pdf",
+        fileName: "plan.pdf",
+        fileSizeBytes: TASK_ATTACHMENT_MAX_BYTES,
+      },
+    });
+  });
+
+  it("accepts known business file extensions when the browser omits the MIME type", () => {
+    expect(
+      validateTaskAttachmentUploadInput({
+        contentType: "",
+        fileName: "meeting-notes.docx",
+        fileSizeBytes: 256_000,
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        fileName: "meeting-notes.docx",
+        fileSizeBytes: 256_000,
+      },
+    });
+  });
+
+  it("limits images to the image size cap and rejects unsupported file types", () => {
+    expect(
+      validateTaskAttachmentUploadInput({
+        contentType: "image/png",
+        fileName: "large-image.png",
+        fileSizeBytes: TASK_ATTACHMENT_IMAGE_MAX_BYTES + 1,
+      }),
+    ).toEqual({ ok: false, code: "INVALID_TASK_ATTACHMENT" });
+
+    expect(
+      validateTaskAttachmentUploadInput({
+        contentType: "application/x-msdownload",
+        fileName: "setup.exe",
+        fileSizeBytes: 128,
+      }),
+    ).toEqual({ ok: false, code: "INVALID_TASK_ATTACHMENT" });
+  });
+
+  it("caps active attachments at five files per task", () => {
+    expect(canAddTaskAttachment(TASK_ATTACHMENT_MAX_FILES - 1)).toBe(true);
+    expect(canAddTaskAttachment(TASK_ATTACHMENT_MAX_FILES)).toBe(false);
+    expect(canAddTaskAttachment(-1)).toBe(false);
   });
 });
