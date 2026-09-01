@@ -1,8 +1,10 @@
 "use client";
 
-import { addToast } from "@heroui/react";
+import { addToast, getToastQueue } from "@heroui/react";
 
 export function showSuccessToast(title: string) {
+  getToastQueue();
+
   addToast({
     title,
     color: "success",

@@ -15,30 +15,35 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <HeroUIProvider navigate={router.push}>
+        <ToastProvider
+          maxVisibleToasts={4}
+          placement="top-right"
+          regionProps={{
+            classNames: {
+              base: "z-[9999]",
+            },
+          }}
+          toastOffset={16}
+          toastProps={{
+            radius: "sm",
+            shadow: "sm",
+            shouldShowTimeoutProgress: true,
+            timeout: 3500,
+            variant: "flat",
+            classNames: {
+              base: "border border-line bg-panel text-ink shadow-lift",
+              closeButton: "opacity-100",
+              description: "text-muted",
+              title: "font-semibold text-ink",
+            },
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           storageKey="team-management-theme"
         >
-          <ToastProvider
-            maxVisibleToasts={4}
-            placement="top-right"
-            toastOffset={16}
-            toastProps={{
-              radius: "sm",
-              shadow: "sm",
-              shouldShowTimeoutProgress: true,
-              timeout: 3500,
-              variant: "flat",
-              classNames: {
-                base: "z-[1200] border border-line bg-panel text-ink shadow-lift",
-                closeButton: "opacity-100",
-                description: "text-muted",
-                title: "font-semibold text-ink",
-              },
-            }}
-          />
           <LocaleProvider>{children}</LocaleProvider>
         </ThemeProvider>
       </HeroUIProvider>
