@@ -1,7 +1,7 @@
 "use client";
 
 import { Autocomplete, AutocompleteItem, Chip, Textarea, type InputProps } from "@heroui/react";
-import { useMemo, useState, type Key, type ReactNode } from "react";
+import { useMemo, useRef, useState, type Key, type ReactNode } from "react";
 import { Controller, type Control, type FieldPath, type FieldValues } from "react-hook-form";
 
 import { inputFieldClassNames, selectPopoverClassNames, textareaFieldClassNames } from "./field-styles";
@@ -92,6 +92,19 @@ function optionText(option: SelectOption): string {
   return [option.name, option.detail].filter(Boolean).join(" ");
 }
 
+function openAutocompleteMenu(input: HTMLInputElement | null) {
+  window.setTimeout(() => {
+    input?.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, code: "ArrowDown", key: "ArrowDown" }));
+  }, 0);
+}
+
+function releaseAutocompleteFocus(input: HTMLInputElement | null) {
+  window.setTimeout(() => {
+    input?.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, code: "Escape", key: "Escape" }));
+    input?.blur();
+  }, 0);
+}
+
 function fieldInputClassNames(hasValue: boolean, compact?: boolean) {
   const input = `${inputFieldClassNames.input} ${hasValue ? "text-primary" : "text-ink"}`;
 
@@ -118,44 +131,58 @@ export function SearchableSelect({
   placeholder,
   selectedKey,
 }: SearchableSelectProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   return (
-    <Autocomplete
-      allowsEmptyCollection
-      aria-label={ariaLabel}
-      classNames={{
-        base: "!mt-0 flex w-full flex-col gap-2 justify-start",
-        listbox: "max-h-64 p-1",
-        listboxWrapper: "max-h-64",
-        popoverContent: "rounded-lg border border-line !bg-white p-1 text-ink shadow-lift dark:!bg-slate-900",
+    <div
+      onMouseDown={(event) => {
+        if (event.button === 0) openAutocompleteMenu(inputRef.current);
       }}
-      defaultFilter={(textValue, inputValue) => textValue.toLocaleLowerCase().includes(inputValue.toLocaleLowerCase())}
-      errorMessage={errorMessage}
-      inputProps={{
-        classNames: fieldInputClassNames(Boolean(selectedKey), compact),
-      }}
-      isInvalid={isInvalid}
-      isRequired={isRequired}
-      label={label ? <RequiredLabel isRequired={isRequired}>{label}</RequiredLabel> : undefined}
-      labelPlacement={label ? "outside-top" : undefined}
-      maxListboxHeight={256}
-      placeholder={placeholder}
-      popoverProps={{ classNames: selectPopoverClassNames }}
-      selectedKey={selectedKey}
-      variant="bordered"
-      onBlur={onBlur}
-      onSelectionChange={onSelectionChange}
+      onTouchStart={() => openAutocompleteMenu(inputRef.current)}
     >
-      {options.map((option) => (
-        <AutocompleteItem
-          key={option.id}
-          className="group data-[hover=true]:bg-primary/5 data-[selected=true]:bg-primary/10"
-          textValue={option.name}
-        >
-          <span className="block text-sm font-semibold text-ink group-data-[selected=true]:text-primary">{option.name}</span>
-          {option.detail ? <span className="block text-xs text-muted group-data-[selected=true]:text-primary/75">{option.detail}</span> : null}
-        </AutocompleteItem>
-      ))}
-    </Autocomplete>
+      <Autocomplete
+        ref={inputRef}
+        allowsEmptyCollection
+        aria-label={ariaLabel}
+        classNames={{
+          base: "!mt-0 flex w-full flex-col gap-2 justify-start",
+          listbox: "max-h-64 p-1",
+          listboxWrapper: "max-h-64",
+          popoverContent: "rounded-lg border border-line !bg-white p-1 text-ink shadow-lift dark:!bg-slate-900",
+        }}
+        defaultFilter={(textValue, inputValue) => textValue.toLocaleLowerCase().includes(inputValue.toLocaleLowerCase())}
+        errorMessage={errorMessage}
+        inputProps={{
+          classNames: fieldInputClassNames(Boolean(selectedKey), compact),
+        }}
+        isInvalid={isInvalid}
+        isRequired={isRequired}
+        label={label ? <RequiredLabel isRequired={isRequired}>{label}</RequiredLabel> : undefined}
+        labelPlacement={label ? "outside-top" : undefined}
+        maxListboxHeight={256}
+        menuTrigger="manual"
+        placeholder={placeholder}
+        popoverProps={{ classNames: selectPopoverClassNames }}
+        selectedKey={selectedKey}
+        variant="bordered"
+        onBlur={onBlur}
+        onSelectionChange={(key) => {
+          onSelectionChange(key);
+          releaseAutocompleteFocus(inputRef.current);
+        }}
+      >
+        {options.map((option) => (
+          <AutocompleteItem
+            key={option.id}
+            className="group data-[hover=true]:bg-primary/5 data-[selected=true]:bg-primary/10"
+            textValue={option.name}
+          >
+            <span className="block text-sm font-semibold text-ink group-data-[selected=true]:text-primary">{option.name}</span>
+            {option.detail ? <span className="block text-xs text-muted group-data-[selected=true]:text-primary/75">{option.detail}</span> : null}
+          </AutocompleteItem>
+        ))}
+      </Autocomplete>
+    </div>
   );
 }
 
@@ -254,54 +281,64 @@ function SearchableMultiSelect({
   value,
 }: SearchableMultiSelectProps) {
   const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const selectedOptions = useMemo(() => options.filter((option) => value.includes(option.id)), [options, value]);
   const availableOptions = useMemo(() => options.filter((option) => !value.includes(option.id)), [options, value]);
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <Autocomplete
-        allowsEmptyCollection
-        aria-label={ariaLabel}
-        classNames={{
-          base: "!mt-0 flex w-full flex-col gap-2 justify-start",
-          listbox: "max-h-64 p-1",
-          listboxWrapper: "max-h-64",
-          popoverContent: "rounded-lg border border-line !bg-white p-1 text-ink shadow-lift dark:!bg-slate-900",
+      <div
+        onMouseDown={(event) => {
+          if (event.button === 0) openAutocompleteMenu(inputRef.current);
         }}
-        defaultFilter={(textValue, inputValue) => textValue.toLocaleLowerCase().includes(inputValue.toLocaleLowerCase())}
-        errorMessage={errorMessage}
-        inputProps={{ classNames: fieldInputClassNames(selectedOptions.length > 0) }}
-        inputValue={query}
-        isInvalid={isInvalid}
-        isRequired={isRequired}
-        label={<RequiredLabel isRequired={isRequired}>{label}</RequiredLabel>}
-        labelPlacement="outside-top"
-        maxListboxHeight={256}
-        menuTrigger="focus"
-        placeholder={placeholder}
-        popoverProps={{ classNames: selectPopoverClassNames }}
-        selectedKey={null}
-        variant="bordered"
-        onBlur={onBlur}
-        onInputChange={setQuery}
-        onSelectionChange={(key) => {
-          if (!key) return;
-          const optionId = String(key);
-          if (!value.includes(optionId)) onChange([...value, optionId]);
-          setQuery("");
-        }}
+        onTouchStart={() => openAutocompleteMenu(inputRef.current)}
       >
-        {availableOptions.map((option) => (
-          <AutocompleteItem
-            key={option.id}
-            className="group data-[hover=true]:bg-primary/5 data-[selected=true]:bg-primary/10"
-            textValue={optionText(option)}
-          >
-            <span className="block text-sm font-semibold text-ink group-data-[selected=true]:text-primary">{option.name}</span>
-            {option.detail ? <span className="block text-xs text-muted group-data-[selected=true]:text-primary/75">{option.detail}</span> : null}
-          </AutocompleteItem>
-        ))}
-      </Autocomplete>
+        <Autocomplete
+          ref={inputRef}
+          allowsEmptyCollection
+          aria-label={ariaLabel}
+          classNames={{
+            base: "!mt-0 flex w-full flex-col gap-2 justify-start",
+            listbox: "max-h-64 p-1",
+            listboxWrapper: "max-h-64",
+            popoverContent: "rounded-lg border border-line !bg-white p-1 text-ink shadow-lift dark:!bg-slate-900",
+          }}
+          defaultFilter={(textValue, inputValue) => textValue.toLocaleLowerCase().includes(inputValue.toLocaleLowerCase())}
+          errorMessage={errorMessage}
+          inputProps={{ classNames: fieldInputClassNames(selectedOptions.length > 0) }}
+          inputValue={query}
+          isInvalid={isInvalid}
+          isRequired={isRequired}
+          label={<RequiredLabel isRequired={isRequired}>{label}</RequiredLabel>}
+          labelPlacement="outside-top"
+          maxListboxHeight={256}
+          menuTrigger="manual"
+          placeholder={placeholder}
+          popoverProps={{ classNames: selectPopoverClassNames }}
+          selectedKey={null}
+          variant="bordered"
+          onBlur={onBlur}
+          onInputChange={setQuery}
+          onSelectionChange={(key) => {
+            if (!key) return;
+            const optionId = String(key);
+            if (!value.includes(optionId)) onChange([...value, optionId]);
+            setQuery("");
+            releaseAutocompleteFocus(inputRef.current);
+          }}
+        >
+          {availableOptions.map((option) => (
+            <AutocompleteItem
+              key={option.id}
+              className="group data-[hover=true]:bg-primary/5 data-[selected=true]:bg-primary/10"
+              textValue={optionText(option)}
+            >
+              <span className="block text-sm font-semibold text-ink group-data-[selected=true]:text-primary">{option.name}</span>
+              {option.detail ? <span className="block text-xs text-muted group-data-[selected=true]:text-primary/75">{option.detail}</span> : null}
+            </AutocompleteItem>
+          ))}
+        </Autocomplete>
+      </div>
       {selectedOptions.length > 0 ? (
         <div aria-label={ariaLabel} className="flex flex-wrap gap-1.5 rounded-lg border border-line bg-panel/80 p-2">
           {selectedOptions.map((option) => (

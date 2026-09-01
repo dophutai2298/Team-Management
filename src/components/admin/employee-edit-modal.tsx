@@ -89,7 +89,9 @@ export function EmployeeEditModal({
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
     defaultValues: toFormValues(employee),
+    shouldFocusError: false,
   });
+  const submitEmployee = form.handleSubmit((values) => onSubmit(toInput(values)));
 
   return (
     <AppModal
@@ -99,7 +101,7 @@ export function EmployeeEditModal({
       onOpenChange={(isOpen) => !isOpen && !isSubmitting && onClose()}
     >
       <ModalContent>
-        <form onSubmit={form.handleSubmit((values) => onSubmit(toInput(values)))}>
+        <form onSubmit={submitEmployee}>
           <ModalHeader className="flex items-start gap-3 border-b border-line/85 px-5 py-4 pr-16">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-primary/15 bg-primary/10 text-primary">
               <BriefcaseBusiness aria-hidden size={18} />
@@ -173,7 +175,11 @@ export function EmployeeEditModal({
               color="primary"
               isLoading={isSubmitting}
               startContent={<Save aria-hidden size={16} />}
-              type="submit"
+              type="button"
+              onPress={() => {
+                if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                void submitEmployee();
+              }}
             >
               {t("employees.saveEmployee")}
             </ActionButton>
